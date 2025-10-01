@@ -2,6 +2,8 @@
 import h5py
 import numpy as np
 
+from ptirtools.debugging import debug
+
 ### Different sub-datasets carrywith them various collections of attributes. 
 ### Here, we define a helper class to specify how attributes are de-serialized (and later serialized).
 ### The classes representing the datasets will then only need to have a specification about which attributes they use.
@@ -36,10 +38,10 @@ def read_h5string_any_to_bool(value:any) -> bool:
         elif len(value.shape) == 1 and value.shape[0] == 1:
             return str(value[0]).lower() in ["1","true","yes"]
         else:
-            print(f"Type Warning: Expected string-like type for boolean attribute, got array of shape {value.shape} and dtype {value.dtype}")
+            debug("Warning", f"Expected string-like type for boolean attribute, got array of shape {value.shape} and dtype {value.dtype}")
             return False
     else:
-        print(f"Type Warning: Expected string-like type for boolean attribute, got {type(value)}")
+        debug("Warning", f"Expected string-like type for boolean attribute, got {type(value)}")
         return False
 
 
@@ -51,7 +53,7 @@ def read_h5string_any_to_str(value:any) -> str:
     elif isinstance(value, np.ndarray) and value.dtype.kind == 'S':
         return ''.join(value.astype('<U1').tolist())
     else:
-        print(f"Type Warning: Expected string-like type for string attribute, got {type(value)}")
+        debug("Warning", f"Expected string-like type for string attribute, got {type(value)}")
         return ""
 
 

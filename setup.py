@@ -13,6 +13,7 @@ setup(
         "numpy>=2.2",
         "scipy>=1.15",
         "matplotlib>=3.10",
-        "re>=2.2"
+        "re>=2.2",
+        "colorama"
     ]
 )

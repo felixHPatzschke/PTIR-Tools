@@ -3,6 +3,7 @@ import h5py
 import numpy as np
 
 from ptirtools.attributes import AttributeSpec, ATTRIBUTES
+from ptirtools.debugging import debug
 
 ### Convert an h5py.Group to a nested dictionary, resolving references
 ### This can be used to access all the data from an HDF5-encoded file, such as a *.ptir file,
@@ -24,7 +25,7 @@ def h5Group2Dict( group, root, key_seq, *, depth=0 ):
                 elif isinstance( val, h5py.Dataset ):
                     attribs[akey] = target[()][0]
                 else:
-                    print( f"Type Warning: {key}" )
+                    debug("Warning", f"Type: {key}")
             else:
                 attribs[akey] = aval
 
@@ -38,7 +39,7 @@ def h5Group2Dict( group, root, key_seq, *, depth=0 ):
             else:
                 res[key] = val[()][0]
         else:
-            print(f"Type Warning: {key}")
+            debug("Warning", f"Type: {key}")
 
     return res
 
@@ -78,41 +79,41 @@ class AbstractDataset:
         ### then, we read metadata
         for key in ds.attrs:
             if key not in ATTRIBUTES:
-                print(f"Warning: attribute '{key}' is not recognized. (Saving separately.)")
+                debug("Warning", f"attribute '{key}' is not recognized. (Saving separately.)")
                 self.unhandled_attributes[key] = ds.attrs[key]
                 continue
-            #print(f"Info: attribute '{key}' is recognized.")
+            debug("Success", f"attribute '{key}' is recognized.")
             
             ### find a specification that matches the type of the attribute value
             h5specs = [ spec for spec in ATTRIBUTES[key] if spec.matches_h5type( ds.attrs[key] ) ]
             if not h5specs:
-                print(f"Warning: attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification is available. (Saving separately.)")
+                debug("Warning", f"attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification is available. (Saving separately.)")
                 self.unhandled_attributes[key] = ds.attrs[key]
                 continue
-            #print(f"Info: a specification for h5 type '{type(ds.attrs[key])}' exists.")
+            debug("Success", f"a specification for h5 type '{type(ds.attrs[key])}' exists.")
             
             ### check if the attribute is expected for this dataset
             if key not in self.__annotations__:
-                print(f"Warning: attribute '{key}' is not expected for this dataset. (Saving separately.)")
+                debug("Warning", f"attribute '{key}' is not expected for this dataset. (Saving separately.)")
                 self.unhandled_attributes[key] = ds.attrs[key]
                 continue
-            #print(f"Info: attribute {key} is expected for dataset of type {type(self)}.")
+            debug("Success", f"attribute {key} is expected for dataset of type {type(self)}.")
             
             ### find a specification that matches the expected python type
             pyspecs = [ spec for spec in h5specs if spec.matches_pytype( getattr(self, key) ) ]
             if not pyspecs:
-                print(f"Warning: attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification for expected type {self.__annotations__[key]} is available. (Saving separately.)")
+                debug("Warning", f"attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification for expected type {self.__annotations__[key]} is available. (Saving separately.)")
                 self.unhandled_attributes[key] = ds.attrs[key]
                 continue
-            #print(f"Info: a specification for py type '{type(getattr(self, key))}' exists.")
+            debug("Success", f"a specification for py type '{type(getattr(self, key))}' exists.")
             
             ### find specifications that match both the given h5 type and the expected python type
             specs = [ spec for spec in pyspecs if spec in h5specs ]
             if not specs:
-                print(f"Warning: attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification for expected type {self.__annotations__[key]} is available. (Saving separately.)")
+                debug("Warning", f"attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification for expected type {self.__annotations__[key]} is available. (Saving separately.)")
                 self.unhandled_attributes[key] = ds.attrs[key]
                 continue
-            #print(f"Info: a specification for {type(ds.attrs[key])} -> {type(getattr(self, key))} exists.")
+            debug("Success", f"a specification for {type(ds.attrs[key])} -> {type(getattr(self, key))} exists.")
 
             value = specs[0].read( ds.attrs[key] )
             setattr( self, key, value )
@@ -284,7 +285,7 @@ class Dataset:
                 meas.load(h5group[key])
                 self.Measurements.append(meas)
             elif key not in ["Images", "Heightmaps", "Views"]:
-                print(f"Warning: Unrecognized top-level key '{key}' in HDF5 group.")
+                debug("Warning", f"Unrecognized top-level key '{key}' in HDF5 group.")
         
         ### There shouldn't be any attributes
         ### TODO: read them anyway
