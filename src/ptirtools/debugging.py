@@ -32,10 +32,10 @@ DEBUG_LEVELS = { dl.name.lower() : dl for dl in [
 ] }
 
 
-def debug(*args):
+def debug(*args) -> None:
     if len(args) == 0:
-        debug("✅")
-        return
+        msg = "✅"
+        level = "debug info"
     elif len(args) == 1:
         msg = str(args[0])
         level = "info"
@@ -80,7 +80,7 @@ def debug(*args):
         print( LEVEL.style_reset )
 
     
-def suppress_debug_levels(level:int|str):
+def suppress_debug_levels(level:int|str) -> None:
     global DEBUG_LEVELS
     if isinstance(level, str):
         level = DEBUG_LEVELS[level.lower()].numeric_value if level.lower() in DEBUG_LEVELS else 3
