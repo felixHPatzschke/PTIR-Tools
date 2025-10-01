@@ -4,7 +4,7 @@ import numpy as np
 
 from ptirtools.debugging import debug
 
-### Different sub-datasets carrywith them various collections of attributes. 
+
 ### Here, we define a helper class to specify how attributes are de-serialized (and later serialized).
 ### The classes representing the datasets will then only need to have a specification about which attributes they use.
 class AttributeSpec:
@@ -27,25 +27,11 @@ class AttributeSpec:
 
 
 ### Next, we define some functions to perform common conversions
-def read_h5string_any_to_bool(value:any) -> bool:
-    if isinstance(value, bool):
-        return value
-    elif isinstance(value, np.bytes_):
-        return value.decode('UTF-8').lower() in ["1","true","yes"]
-    elif isinstance(value, np.ndarray): 
-        if value.dtype.kind == 'S':
-            return ''.join(value.astype('<U1').tolist()).lower() in ["1","true","yes"]
-        elif len(value.shape) == 1 and value.shape[0] == 1:
-            return str(value[0]).lower() in ["1","true","yes"]
-        else:
-            debug("Warning", f"Expected string-like type for boolean attribute, got array of shape {value.shape} and dtype {value.dtype}")
-            return False
-    else:
-        debug("Warning", f"Expected string-like type for boolean attribute, got {type(value)}")
-        return False
 
-
-def read_h5string_any_to_str(value:any) -> str:
+### strings may be encoded in various different formats, e.g.
+### - a numpy bytestring
+### - a numpy array whose members are fixed-length strings
+def read_h5string_any_to_str(value:any) -> str | None:
     if isinstance(value, str):
         return value
     elif isinstance(value, np.bytes_):
@@ -54,7 +40,34 @@ def read_h5string_any_to_str(value:any) -> str:
         return ''.join(value.astype('<U1').tolist())
     else:
         debug("Warning", f"Expected string-like type for string attribute, got {type(value)}")
-        return ""
+        return None
+
+
+### boolean values may be encoded in a few different ways, e.g.
+### - array[int]
+### - lower case string
+### - upper case string
+def read_h5string_any_to_bool(value:any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    else:
+        ### assume string-like
+        lookup = { "true":True, "false":False, "yes":True, "no":False, "1":True, "0":False }
+        keystring = ""
+        if isinstance(value, np.bytes_):
+            keystring = value.decode('UTF-8').lower()
+        elif isinstance(value, np.ndarray): 
+            if value.dtype.kind == 'S':
+                keystring = ''.join(value.astype('<U1').tolist()).lower()
+            elif len(value.shape) == 1 and value.shape[0] == 1:
+                keystring = str(value[0]).lower()
+            else:
+                debug("Warning", f"Expected string-like type for boolean attribute, got array of shape {value.shape} and dtype {value.dtype}")
+                return None
+            return lookup.get(keystring, None)
+        else:
+            debug("Warning", f"Expected string-like type for boolean attribute, got {type(value)}")
+            return None
 
 
 ### commonly used attribute specifications 
