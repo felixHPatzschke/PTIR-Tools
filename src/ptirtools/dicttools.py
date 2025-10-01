@@ -162,9 +162,14 @@ def make_drawable_tree(tree, *, depth=0, dataset_classes_reduction=1):
             ### value is a dataset
             if isinstance(value, np.ndarray):
                 shape = value.shape
-                if len(shape) == 1 and shape[0] < 5:
+                if len(shape) == 1 and value.dtype.kind == "S":
+                    ### intercept fixed-width byte strings
+                    res[key] = '"'+''.join(value.astype('<U1').tolist())+'"'
+                elif len(shape) == 1 and shape[0] < 5:
+                    ### intercept short 1D arrays and output by value
                     res[key] = f"[ {', '.join([str(v) for v in value])} ]"
                 else:
+                    ### for larger arrays, output the shape
                     res[key] = f"np.array[{','.join([ str(x) for x in value.shape])}]"
             elif isinstance(value, str):
                 res[key] = f"\"{value}\""
