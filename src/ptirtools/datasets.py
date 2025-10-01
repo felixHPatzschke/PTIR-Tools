@@ -132,6 +132,12 @@ class AbstractImage:
     PositionZ : float | None
     SizeHeight : float | None
     SizeWidth : float | None
+
+    def extent(self) -> tuple[float,float,float,float]:
+        return ( self.PositionX - 0.5*self.SizeWidth  , 
+                 self.PositionX + 0.5*self.SizeWidth  , 
+                 self.PositionY - 0.5*self.SizeHeight , 
+                 self.PositionY + 0.5*self.SizeHeight )
     
 
 
