@@ -1,6 +1,7 @@
 ### debugging
 import inspect #currentframe, getframeinfo
 import colorama as ca
+import sys
 
 
 class DebugLevel:
@@ -49,7 +50,7 @@ def debug(*args) -> None:
     right_shift = { "traceback":0 , "level":0 }
     
     if not LEVEL.suppressed:
-        print( LEVEL.style_setup, end='' )
+        print( LEVEL.style_setup, end='', file=sys.stderr )
         
         if LEVEL.print_level: 
             #right_shift["level"] = len( LEVEL.name.upper() ) + 2
@@ -61,14 +62,14 @@ def debug(*args) -> None:
             if LEVEL.traceback != -1:
                 of = of[:LEVEL.traceback+1]
             of = of[::-1]
-            traceback_lines = [ f"{frame.filename.split('/')[-1]} in line {frame.lineno}:\t" for frame in of[:-1] ]
+            traceback_lines = [ f"{frame.filename.replace('\\','/').split('/')[-1]} in line {frame.lineno}:\t" for frame in of[:-1] ]
             if LEVEL.print_function:
                 traceback_functions = [ f"{str(frame.function)+'():' if str(frame.function)[0] != '<' else ''}" for frame in of[:-1] ]
                 for i in range(len(traceback_lines)-1):
                     traceback_lines[i] += traceback_functions[i]
                 msg = traceback_functions[-1] + "\n" + msg
             right_shift["traceback"] = len( traceback_lines[-1] )
-            print( "\n".join( traceback_lines ), end='' )
+            print( "\n".join( traceback_lines ), end='', file=sys.stderr )
         
         if '\n' in msg:
             indent_str = "\n"
@@ -76,9 +77,9 @@ def debug(*args) -> None:
                 indent_str += " "*right_shift["traceback"] + "\t"
             indent_str += " "*right_shift["level"]
             msg = msg.replace("\n", indent_str)
-        print( msg, end='' )
+        print( msg, end='', file=sys.stderr )
         
-        print( LEVEL.style_reset )
+        print( LEVEL.style_reset, file=sys.stderr )
 
     
 def suppress_debug_levels(level:int|str) -> None:
