@@ -52,7 +52,7 @@ def read_h5string_any_to_bool(value:any) -> bool | None:
         return value
     else:
         ### assume string-like
-        lookup = { "true":True, "false":False, "yes":True, "no":False, "1":True, "0":False }
+        lookup = { "true":True, "false":False, "yes":True, "no":False, "on":True, "off":False, "1":True, "0":False }
         keystring = ""
         if isinstance(value, np.bytes_):
             keystring = value.decode('UTF-8').lower()
@@ -152,8 +152,9 @@ ATTRIBUTES = {
     "platform" : ( bytestring_spec , ) ,
     "pyUSID_version" : ( bytestring_spec , ) ,
     ### Associated with Position_Indices, Position_Values, Spectroscopic_Indices, Spectroscopic_Values
-    "labels" : ( s1array_spec , ) ,
-    "units" : ( s1array_spec , ) ,
+    "labels" : ( s1array_spec , bytestring_spec ) ,
+    "units" : ( s1array_spec , bytestring_spec ) ,
+    "quantity" : ( s1array_spec , bytestring_spec ) ,
     ### Associated with MEASUREMENTS
     "Averages" : ( int_spec , ) ,
     "BackgroundFilename" : ( bytestring_spec , ) ,

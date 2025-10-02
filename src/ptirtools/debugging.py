@@ -31,6 +31,7 @@ DEBUG_LEVELS = { dl.name.lower() : dl for dl in [
     DebugLevel( "Warning"    , 6 , ca.Fore.YELLOW ,                            ca.Fore.RESET ,                                  1,  False, True  ), 
     DebugLevel( "Error"      , 7 , ca.Style.BRIGHT+ca.Fore.RED ,               ca.Style.RESET_ALL+ca.Fore.RESET ,               1,  False, True  ), 
     DebugLevel( "Critical"   , 8 , ca.Style.BRIGHT+ca.Back.RED+ca.Fore.WHITE,  ca.Style.RESET_ALL+ca.Back.RESET+ca.Fore.RESET , -1, False, True  ), 
+    *[ DebugLevel( f"Trace{i}", 3, ca.Fore.BLUE, ca.Fore.RESET, i, True, False) for i in range(2,10) ], 
 ] }
 
 
