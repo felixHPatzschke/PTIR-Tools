@@ -23,12 +23,13 @@ class DebugLevel:
 
 DEBUG_LEVELS = { dl.name.lower() : dl for dl in [
     DebugLevel( ""           , 1 , ca.Style.DIM ,                              ca.Style.RESET_ALL ,                             0,  False, False ), 
-    DebugLevel( "Debug Info" , 2 , ca.Fore.BLUE ,                              ca.Fore.RESET ,                                  -1, True, True   ), 
-    DebugLevel( "Info"       , 3 , ca.Style.DIM ,                              ca.Style.RESET_ALL ,                             1,  False, False ), 
+    DebugLevel( "Debug Info" , 2 , ca.Fore.BLUE ,                              ca.Fore.RESET ,                                  1,  True,  False ), 
+    DebugLevel( "Trace"      , 3 , ca.Fore.BLUE ,                              ca.Fore.RESET ,                                  -1, True,  False ), 
     DebugLevel( "Success"    , 4 , ca.Fore.GREEN ,                             ca.Fore.RESET ,                                  0,  False, False ), 
-    DebugLevel( "Warning"    , 5 , ca.Fore.YELLOW ,                            ca.Fore.RESET ,                                  1,  False, True  ), 
-    DebugLevel( "Error"      , 6 , ca.Style.BRIGHT+ca.Fore.RED ,               ca.Style.RESET_ALL+ca.Fore.RESET ,               1,  False, True  ), 
-    DebugLevel( "Critical"   , 7 , ca.Style.BRIGHT+ca.Back.RED+ca.Fore.WHITE,  ca.Style.RESET_ALL+ca.Back.RESET+ca.Fore.RESET , -1, False, True  ), 
+    DebugLevel( "Info"       , 5 , ca.Style.DIM ,                              ca.Style.RESET_ALL ,                             1,  False, False ), 
+    DebugLevel( "Warning"    , 6 , ca.Fore.YELLOW ,                            ca.Fore.RESET ,                                  1,  False, True  ), 
+    DebugLevel( "Error"      , 7 , ca.Style.BRIGHT+ca.Fore.RED ,               ca.Style.RESET_ALL+ca.Fore.RESET ,               1,  False, True  ), 
+    DebugLevel( "Critical"   , 8 , ca.Style.BRIGHT+ca.Back.RED+ca.Fore.WHITE,  ca.Style.RESET_ALL+ca.Back.RESET+ca.Fore.RESET , -1, False, True  ), 
 ] }
 
 
@@ -38,12 +39,12 @@ def debug(*args) -> None:
         level = "debug info"
     elif len(args) == 1:
         msg = str(args[0])
-        level = "info"
+        level = "debug info"
     elif len(args) > 1:
         level = args[0]
         msg = "\n".join( [ str(a) for a in args[1:] ] )
 
-    LEVEL = DEBUG_LEVELS[level.lower()] if level.lower() in DEBUG_LEVELS else DEBUG_LEVELS["info"]
+    LEVEL = DEBUG_LEVELS[level.lower()] if level.lower() in DEBUG_LEVELS else DEBUG_LEVELS["debug info"]
     
     right_shift = { "traceback":0 , "level":0 }
     
@@ -88,7 +89,7 @@ def suppress_debug_levels(level:int|str) -> None:
         DEBUG_LEVELS[key].suppress( DEBUG_LEVELS[key].numeric_value <= level )
 
 
-### by default, only show explicit success notifications, warnings and errors
+### by default, only show warnings and errors
 suppress_debug_levels("info")
 
 
