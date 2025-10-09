@@ -2,8 +2,6 @@
 import h5py
 import numpy as np
 
-from collections.abc import Iterable
-
 from ptirtools.debugging import debug
 
 
@@ -313,7 +311,7 @@ class AttribsDiff(ObjectWithAttributes):
 
     def __getitem__(self, arg:str|tuple[str]):
         res = AttribsDiff()
-        for a in ( arg if isinstance(arg, Iterable) else [arg] ):
+        for a in ( [arg] if isinstance(arg, str) else arg ):
             if a in ATTRIBUTES:
                 setattr(res, a, getattr(self, a))
             else:
