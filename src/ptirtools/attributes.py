@@ -2,6 +2,8 @@
 import h5py
 import numpy as np
 
+from collections.abc import Iterable
+
 from ptirtools.debugging import debug
 
 
@@ -302,5 +304,28 @@ class AttribsDiff(ObjectWithAttributes):
             res += "\n  " + attribute + ":" + (" "*(1+max_attr_width-len(attribute))) + str(value)
         return res
 
+    def __contains__(self, attribute) -> bool:
+        if attribute in ATTRIBUTES:
+            return ( getattr(self, attribute) is not None )
+        else:
+            debug("Error", f"Unrecognized attribute: {attribute}")
+            return None
+
+    def __getitem__(self, arg:str|tuple[str]):
+        res = AttribsDiff()
+        for a in ( arg if isinstance(arg, Iterable) else [arg] ):
+            if a in ATTRIBUTES:
+                setattr(res, a, getattr(self, a))
+            else:
+                debug("Error", f"Unrecognized attribute: {a}")
+        return res
+
+    def __sub__(self, attributes:list[str]):
+        res = AttribsDiff()
+        for a in ATTRIBUTES:
+            setattr( res, a, None if a in attributes else getattr(self, a) )
+        return res
+
+    
 
 
