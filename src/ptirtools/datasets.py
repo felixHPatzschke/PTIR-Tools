@@ -2,7 +2,7 @@
 import h5py
 import numpy as np
 
-from ptirtools.attributes import AttributeSpec, ATTRIBUTES
+from ptirtools.attributes import ObjectWithAttributes, AttribsDiff
 from ptirtools.debugging import debug
 
 ### Convert an h5py.Group to a nested dictionary, resolving references
@@ -48,7 +48,13 @@ def h5Group2Dict( group, root, key_seq, *, depth=0 ):
 ### but assumptions about the structure are being made. 
 
 
+class AbstractDataset(ObjectWithAttributes):
 
+    def __init__(self):
+        super().__init__()
+
+    def load_data(self, ds:h5py.Dataset):
+        self.data = ds[()]
 
 
 # class SpectroscopicDomain:
@@ -64,65 +70,6 @@ def h5Group2Dict( group, root, key_seq, *, depth=0 ):
 #             self.Averages = attribs.get("Averages", [None])[0]
 #             ### etc
 #         return self
-
-
-class AbstractDataset:
-    def __init__(self):
-        self.unhandled_attributes = dict()
-        for name in self.__annotations__:
-            setattr(self, name, None)
-    
-    def load_attribs(self, ds:h5py.Dataset|h5py.Group, root:h5py.Group):
-        ### then, we read metadata
-        debug("Trace3", f"Loading attribs for dataset of type '{type(self)}'...")
-        for key in ds.attrs:
-            if isinstance( ds.attrs[key] , h5py.Reference ):
-                ref : h5py.Reference = ds.attrs[key]
-                target = root[ref]
-                debug("Warning", f"attribute '{key}' is an HDF5 reference:\n{target.name}\nReference handling is not yet implemented. (Skipping.)")
-                continue
-
-            if key not in ATTRIBUTES:
-                debug("Info", f"attribute '{key}' is not recognized. (Saving separately.)")
-                self.unhandled_attributes[key] = ds.attrs[key]
-                continue
-            debug("", f"attribute '{key}' is recognized.")
-            
-            ### find a specification that matches the type of the attribute value
-            h5specs = [ spec for spec in ATTRIBUTES[key] if spec.matches_h5type( ds.attrs[key] ) ]
-            if not h5specs:
-                debug("Info", f"attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification is available. (Saving separately.)")
-                self.unhandled_attributes[key] = ds.attrs[key]
-                continue
-            debug("", f"a specification for h5 type '{type(ds.attrs[key])}' exists.")
-            
-            ### check if the attribute is expected for this dataset
-            if key not in self.__annotations__:
-                debug("Info", f"attribute '{key}' is not expected for dataset of type '{type(self)}'. (Saving separately.)")
-                self.unhandled_attributes[key] = h5specs[0].read(ds.attrs[key])
-                continue
-            debug("", f"attribute {key} is expected for dataset of type '{type(self)}'.")
-            
-            ### find a specification that matches the expected python type
-            pyspecs = [ spec for spec in h5specs if spec.matches_pytype( getattr(self, key) ) ]
-            if not pyspecs:
-                debug("Info", f"attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification for expected type {self.__annotations__[key]} is available. (Saving separately.)")
-                self.unhandled_attributes[key] = h5specs[0].read(ds.attrs[key])
-                continue
-            debug("", f"a specification for py type '{type(getattr(self, key))}' exists.")
-            
-            ### find specifications that match both the given h5 type and the expected python type
-            specs = [ spec for spec in pyspecs if spec in h5specs ]
-            if not specs:
-                debug("Info", f"attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification for expected type {self.__annotations__[key]} is available. (Saving separately.)")
-                self.unhandled_attributes[key] = h5specs[0].read(ds.attrs[key])
-                continue
-            #debug("Success", f"a specification for attribute '{key}', h5type '{type(ds.attrs[key])}' -> pytype '{type(getattr(self, key))}' exists.")
-
-            setattr( self, key, specs[0].read( ds.attrs[key] ) )
-        
-    def load_data(self, ds:h5py.Dataset):
-        self.data = ds[()]
 
 
 class AbstractImage:

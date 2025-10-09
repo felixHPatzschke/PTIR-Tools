@@ -185,3 +185,122 @@ ATTRIBUTES = {
     "TimeConstant" : ( float_spec , ) , 
     "WavenumberOffset" : ( float_spec , ) , 
 }
+
+
+class ObjectWithAttributes:
+    def __init__(self):
+        self.unhandled_attributes = dict()
+        for name in self.__annotations__:
+            setattr(self, name, None)
+
+    def load_attribs(self, ds:h5py.Dataset|h5py.Group, root:h5py.Group):
+        ### then, we read metadata
+        debug("Trace3", f"Loading attribs for dataset of type '{type(self)}'...")
+        for key in ds.attrs:
+            if isinstance( ds.attrs[key] , h5py.Reference ):
+                ref : h5py.Reference = ds.attrs[key]
+                target = root[ref]
+                debug("Warning", f"attribute '{key}' is an HDF5 reference:\n{target.name}\nReference handling is not yet implemented. (Skipping.)")
+                continue
+
+            if key not in ATTRIBUTES:
+                debug("Info", f"attribute '{key}' is not recognized. (Saving separately.)")
+                self.unhandled_attributes[key] = ds.attrs[key]
+                continue
+            debug("", f"attribute '{key}' is recognized.")
+
+            ### find a specification that matches the type of the attribute value
+            h5specs = [ spec for spec in ATTRIBUTES[key] if spec.matches_h5type( ds.attrs[key] ) ]
+            if not h5specs:
+                debug("Info", f"attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification is available. (Saving separately.)")
+                self.unhandled_attributes[key] = ds.attrs[key]
+                continue
+            debug("", f"a specification for h5 type '{type(ds.attrs[key])}' exists.")
+
+            ### check if the attribute is expected for this dataset
+            if key not in self.__annotations__:
+                debug("Info", f"attribute '{key}' is not expected for dataset of type '{type(self)}'. (Saving separately.)")
+                self.unhandled_attributes[key] = h5specs[0].read(ds.attrs[key])
+                continue
+            debug("", f"attribute {key} is expected for dataset of type '{type(self)}'.")
+
+            ### find a specification that matches the expected python type
+            pyspecs = [ spec for spec in h5specs if spec.matches_pytype( getattr(self, key) ) ]
+            if not pyspecs:
+                debug("Info", f"attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification for expected type {self.__annotations__[key]} is available. (Saving separately.)")
+                self.unhandled_attributes[key] = h5specs[0].read(ds.attrs[key])
+                continue
+            debug("", f"a specification for py type '{type(getattr(self, key))}' exists.")
+
+            ### find specifications that match both the given h5 type and the expected python type
+            specs = [ spec for spec in pyspecs if spec in h5specs ]
+            if not specs:
+                debug("Info", f"attribute '{key}' has value of type {type(ds.attrs[key])}, but no matching specification for expected type {self.__annotations__[key]} is available. (Saving separately.)")
+                self.unhandled_attributes[key] = h5specs[0].read(ds.attrs[key])
+                continue
+            #debug("Success", f"a specification for attribute '{key}', h5type '{type(ds.attrs[key])}' -> pytype '{type(getattr(self, key))}' exists.")
+
+            setattr( self, key, specs[0].read( ds.attrs[key] ) )
+
+    def load_data(self, ds:h5py.Dataset):
+        self.data = ds[()]
+
+
+
+class AttribsDiff(ObjectWithAttributes):
+    ### can hold any attribute but no data
+    
+    def __init__(self, *objects:list[ObjectWithAttributes]):
+        self.unhandled_attributes = dict()
+        for attribute in ATTRIBUTES:
+            value = None
+            
+            if objects:
+                values = [ getattr(o,attribute) if hasattr(o,attribute) else None for o in objects ]
+                first = values[0]
+                all_equal = True
+                for other in values[1:]:
+                    if not ( (other == first) or (first is None and other is None) ):
+                        all_equal = False
+                
+                if not all_equal:
+                    value = values
+
+            setattr(self, attribute, value)
+
+    ### returns the number of differing attributes
+    def __len__(self) -> int:
+        res = 0
+        for attribute in ATTRIBUTES:
+            if getattr(self, attribute) is not None:
+                res += 1
+        return res
+        
+    ### returns true if any attributes differ
+    def __bool__(self) -> bool:
+        for attribute in ATTRIBUTES:
+            if getattr(self, attribute) is not None:
+                return True
+        return False
+
+    def __not__(self) -> bool:
+        return not self.__bool__()
+    
+    def __str__(self) -> str:
+        diff_attribs = []
+        for attribute in ATTRIBUTES:
+            value = getattr(self, attribute)
+            if value is not None:
+                diff_attribs.append( (attribute, value) )
+        
+        if len(diff_attribs) == 0:
+            return "AttribsDiff: <None>"
+        
+        res = "AttribsDiff:"
+        max_attr_width = max( len(a) for a,v in diff_attribs )
+        for attribute, value in diff_attribs:
+            res += "\n  " + attribute + ":" + (" "*(1+max_attr_width-len(attribute))) + str(value)
+        return res
+
+
+
