@@ -63,7 +63,7 @@ def debug(*args) -> None:
             if LEVEL.traceback != -1:
                 of = of[:LEVEL.traceback+1]
             of = of[::-1]
-            traceback_lines = [ f"{frame.filename.replace('\\','/').split('/')[-1]} in line {frame.lineno}:\t" for frame in of[:-1] ]
+            traceback_lines = [ frame.filename.replace('\\','/').split('/')[-1] + " in line " + frame.lineno + ":\t" for frame in of[:-1] ]
             if LEVEL.print_function:
                 traceback_functions = [ f"{str(frame.function)+'():' if str(frame.function)[0] != '<' else ''}" for frame in of[:-1] ]
                 for i in range(len(traceback_lines)-1):
