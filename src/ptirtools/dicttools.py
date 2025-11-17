@@ -18,14 +18,14 @@ def pretty_print(d:dict, indent=None, omit_keys=None, vlines_at=None):
     indent = 4 if indent is None else indent
     vlines_at = vlines_at if vlines_at is not None else []
     
-    max_key_length = np.max( [ len(k) for k in d.keys() if k not in omit_keys ] )
+    max_key_length = np.max( [ len(k) for k in d.keys() if k not in omit_keys ] + [0] )
     i = 0
     for k,v in d.items():
         if k not in omit_keys:
             connector_key_value = "─┼─" if i+1 < len( [ k_ for k_ in d.keys() if k_ not in omit_keys ] ) else "─┴─"
             indent_str = "".join( [ "│" if i in vlines_at else " " for i in range(indent) ] )
             if isinstance( v , dict ):
-                max_subdict_key_length = np.max( [ len(k_) for k_ in v.keys() ] )
+                max_subdict_key_length = np.max( [ len(k_) for k_ in v.keys() ] + [0] )
                 print( f"{indent_str}{' '*(max_key_length-len(k))}{k} {connector_key_value}─{'─'*(max_subdict_key_length+2)}╮" )
                 pretty_print( 
                     v, 
@@ -149,15 +149,16 @@ def make_drawable_tree(tree, *, depth=0, dataset_classes_reduction=1):
     res = {}
     for key,value in tree.items():
         if isinstance(value, dict):
-            #print( f"{'  '*depth}{key}" )
-            numericaltail = int(strGetNumericTail(key)) if strEndsWithNumber(key) else 0
-            if numericaltail == 0:
-                res[key] = make_drawable_tree(value, depth=depth+1, dataset_classes_reduction=dataset_classes_reduction)
-            elif numericaltail < dataset_classes_reduction:
-                res[key] = { "···" : "" }
-            elif numericaltail == dataset_classes_reduction:
-                #res[key[:-len(strGetNumericTail(key))]+"###"] = ""
-                res["···"] = ""
+            # #print( f"{'  '*depth}{key}" )
+            # numericaltail = int(strGetNumericTail(key)) if strEndsWithNumber(key) else 0
+            # if numericaltail == 0:
+            #     res[key] = make_drawable_tree(value, depth=depth+1, dataset_classes_reduction=dataset_classes_reduction)
+            # elif numericaltail < dataset_classes_reduction:
+            #     res[key] = { "···" : "" }
+            # elif numericaltail == dataset_classes_reduction:
+            #     #res[key[:-len(strGetNumericTail(key))]+"###"] = ""
+            #     res["···"] = ""
+            res[key] = make_drawable_tree(value, depth=depth+1, dataset_classes_reduction=dataset_classes_reduction)
         else:
             ### value is a dataset
             if isinstance(value, np.ndarray):
