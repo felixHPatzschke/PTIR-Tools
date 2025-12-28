@@ -11,6 +11,7 @@ The following fundamental measurement types exist:
 - `OPTIRImage`: OPTIR Images are scanned micrographs, mapping each point on an _xy_ grid to some kind of value. 
 - `CameraImage`: A micrograph recorded with a normal camera, in greyscale.
 - `FluorescenceImage`: A fluorescence micrograph, also recorded on a normal camera.
+- `FLPTIRImage`: A difference micrograph between fluorescence signals with IR on and off. 
 
 ### Relationships between OPTIR Measurements
 
@@ -42,6 +43,13 @@ Importantly, these higher-level structures may be combined. So, we might have a 
 ### Camera Images
 Some standard micrographs are recorded with a normal camera. These are mainly used for orientation, to identify/select a point/region to spectrally analyze and to document the sample. These measurements have types `CameraImage` and `FluorescenceImage`. For Fluorescence images, each available filter constitutes a channel. Otherwise matching Fluorescence images may be combined into an RGB composite. Not a priority to implement handling for these right now.
 
+### FLPTIR Images
+FLPTIR is a wide field mode of acquisition of IR absorption data at a microscopic scale, using the fact that fluorescence is attenuated by heat. Of a fluorescent sample, fluorescence micrographs are recorded sequentially, with the IR laser at a constant wave number alternating between on and off. The difference between consecutive images will show where heating through absorption weakened the fluorescence intensity. Measurements are accumulated over a few cycles to improve signal-to-noise. 
+
+The stored datasets contain pairs of images, one giving the average fluorescence intensity, the other giving the correlation of fluorescence intensity and IR state. This somewhat corresponds to a zeroth-order harmonic (DC) and first-order harmonic (OPTIR). However, OPTIR and FLPTIR are quantitatively different and these signals should not be confused for one another. 
+
+Within each such pair of images, the IR wavenumber is fixed, but, in the storage format, FLPTIR images may be grouped into (sparse) hyperspectral datasets, i.e. one for each probed wavenumber. 
+
 ### Metadata
 Certain kinds of metadata have some kind of structure and should therefore be handled by dedicated classes. This includes in particular...
 
@@ -55,6 +63,10 @@ Certain kinds of metadata have some kind of structure and should therefore be ha
 All metadata classes should be hashable and comparable for equality, so that we can easily identify measurements that share the same metadata and sort measurements by domains for example. 
 
 As for the configuration, there should be one master class, `MeasurementConfiguration`, that _may_ store all configuration parameters but also works if only some of them are defined. Two configurations should be considered equal if all parameters that are defined in both configurations are equal. This way, we can easily group measurements by configuration even if not all configuration parameters are recorded for all measurements. The configuration class should also provide a way to generate human-readable descriptions of the configuration, e.g. for plot titles and legends. Member classes may be implemented if convenient. 
+
+### Backgrounds
+
+Some measurements link to a background or calibration measurement. OPTIR and FLPTIR measurements require different manners of background / calibration measurements. 
 
 ### Other Tools
 
@@ -96,6 +108,7 @@ Furthermore, a measurement group carries attributes. The `TYPE` attribute should
 - `OPTIRImage`
 - `FluorescenceImage`
 - `CameraImage`
+- `FLPTIRImage`
 
 The other attributes contain metadata about the measurement, such as positioning data, a timestamp, environmental parameters (temperature, humidity) information about the OPTIR configuration and so on. A breakdown of all attributes of a measurement group is given in `PTIR Measurement Attributes.md`. Not all attributes are present in all measurement groups. 
 
@@ -227,6 +240,8 @@ For each basic measurement type (i.e `OPTIRSpectrum` and `OPTIRImage` for no
 Then, the multi channel classes should (a) include metadata to keep track of which harmonic orders are available and in what form (complex or amplitude only) and (b) provide methods to access the data in a convenient way.
 
 It might actually make sense to implement the multi-channel classes first, and then define the single-channel "base" classes as special cases of these, where only one channel is present. This should avoid code duplication.
+
+> Note, that non-zero-order harmonic signals should generally be normalized against the corresponding zeroth-order harmonic signal if one is to derive quantitative statements from the measurement. For OPTIR, it is currently unclear if this is done during acquisition or remains to be done in analysis. For FLPTIR, it is not done in acquisition. Also note that this normalization affects signal-to-noise.
 
 ### Recognition of Higher-Level Structures
 
