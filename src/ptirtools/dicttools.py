@@ -1,8 +1,53 @@
 
 import numpy as np
 import re as regex
+import h5py
+
+from ptirtools.debugging import debug
+
+
+### Convert an h5py.Group to a nested dictionary, resolving references
+### This can be used to access all the data from an HDF5-encoded file, such as a *.ptir file,
+### but no structure is assumed.
+def h5Group2Dict( group, root, key_seq, *, depth=0 ):
+    """
+    Convert an h5py.Group to a nested dictionary, resolving references.
+    """
+    res = {}
+
+    for key,val in group.items():
+        attribs = {}
+        for akey, aval in val.attrs.items():
+            if isinstance( aval , h5py.Reference ):
+                target = root[aval]
+                if isinstance( target, h5py.Group ):
+                    attribs[akey] = h5Group2Dict( target, root, [*key_seq, key], depth=depth+1 )
+                elif isinstance( val, h5py.Dataset ):
+                    attribs[akey] = target[()]
+                else:
+                    debug("Warning", f"Type: {key}")
+            else:
+                attribs[akey] = aval
+
+        if isinstance( val, h5py.Group ):
+            res[key] = h5Group2Dict( val, root, [*key_seq, key], depth=depth+1 )
+            if attribs:
+                res[key]['attribs'] = attribs
+        elif isinstance( val, h5py.Dataset ):
+            if attribs:
+                res[key] = dict( data=val[()], meta=attribs )
+            else:
+                res[key] = val[()]
+        else:
+            debug("Warning", f"Type: {key}")
+
+    return res
+
 
 def flatten_dict(d:dict, *, parent_key:str="", separator:str='/') -> dict:
+    """
+    Flatten a nested dictionary by concatenating keys
+    """
     res = {}
     for k, v in d.items():
         new_key = f"{parent_key}{separator}{k}" if parent_key else k
@@ -14,6 +59,15 @@ def flatten_dict(d:dict, *, parent_key:str="", separator:str='/') -> dict:
 
 
 def pretty_print(d:dict, indent=None, omit_keys=None, vlines_at=None):
+    """
+    Print a nested dictionary to standard out in a visually intuitive way.
+    
+    :param d: dictionary to print out
+    :type d: dict
+    :param indent: number of spaces to indent per nesting layer
+    :param omit_keys: iterable of keys that shall be skipped
+    :param vlines_at: argument to keep track of where to place a vertical line through recursion layers
+    """
     omit_keys = omit_keys if omit_keys is not None else []
     indent = 4 if indent is None else indent
     vlines_at = vlines_at if vlines_at is not None else []

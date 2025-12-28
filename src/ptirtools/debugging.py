@@ -43,10 +43,14 @@ def debug(*args) -> None:
         msg = str(args[0])
         level = "debug info"
     elif len(args) > 1:
-        level = args[0]
-        msg = "\n".join( [ str(a) for a in args[1:] ] )
+        if args[0].lower() in DEBUG_LEVELS.keys():
+            level = args[0]
+            msg = "\n".join( [ str(a) for a in args[1:] ] )
+        else:
+            level = "debug info"
+            msg = "\n".join( [ str(a) for a in args ] )
 
-    LEVEL = DEBUG_LEVELS[level.lower()] if level.lower() in DEBUG_LEVELS else DEBUG_LEVELS["debug info"]
+    LEVEL = DEBUG_LEVELS.get(level.lower(), DEBUG_LEVELS["debug info"])
     
     right_shift = { "traceback":0 , "level":0 }
     
@@ -63,7 +67,7 @@ def debug(*args) -> None:
             if LEVEL.traceback != -1:
                 of = of[:LEVEL.traceback+1]
             of = of[::-1]
-            traceback_lines = [ frame.filename.replace('\\','/').split('/')[-1] + " in line " + frame.lineno + ":\t" for frame in of[:-1] ]
+            traceback_lines = [ frame.filename.replace('\\','/').split('/')[-1] + " in line " + str(frame.lineno) + ":\t" for frame in of[:-1] ]
             if LEVEL.print_function:
                 traceback_functions = [ f"{str(frame.function)+'():' if str(frame.function)[0] != '<' else ''}" for frame in of[:-1] ]
                 for i in range(len(traceback_lines)-1):

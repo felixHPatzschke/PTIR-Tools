@@ -1,6 +1,6 @@
 # ptirtools core module
 
-__version__ = "0.1.0"
+__version__ = "0.5.0"
 
 # expose sub-modules here
 import ptirtools.datasets
@@ -10,5 +10,4 @@ import ptirtools.peaks
 import ptirtools.debugging
 
 # expose core functionality here
-from ptirtools.datasets import Dataset, Image, Heightmap, Measurement
-
+from ptirtools.debugging import debug
