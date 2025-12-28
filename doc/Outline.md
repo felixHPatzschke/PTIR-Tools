@@ -64,9 +64,13 @@ All metadata classes should be hashable and comparable for equality, so that we 
 
 As for the configuration, there should be one master class, `MeasurementConfiguration`, that _may_ store all configuration parameters but also works if only some of them are defined. Two configurations should be considered equal if all parameters that are defined in both configurations are equal. This way, we can easily group measurements by configuration even if not all configuration parameters are recorded for all measurements. The configuration class should also provide a way to generate human-readable descriptions of the configuration, e.g. for plot titles and legends. Member classes may be implemented if convenient. 
 
+There should also be a catch-all metadata class that can store arbitrary metadata, especially that which we won't have implemented a dedicated container for yet. 
+
 ### Backgrounds
 
-Some measurements link to a background or calibration measurement. OPTIR and FLPTIR measurements require different manners of background / calibration measurements. 
+Some measurements link to a background or calibration measurement. OPTIR and FLPTIR measurements require different manners of background / calibration measurements, which should not be confused for one another. 
+
+> However, it appears as though, because background measurements generally give the spectral efficiency curve of the setup for a specific measurement mode, they always have the `TYPE` of an `OPTIRSpectrum`. (to be verified)
 
 ### Other Tools
 

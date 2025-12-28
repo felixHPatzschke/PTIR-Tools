@@ -22,7 +22,7 @@ OUTPUT_DIRECTORY = "./testing/output"
 
 def test_load_ptirfile(ifn:str):
     ptirfile = ptir.PTIRFile(ifn)
-    debug(f"File '{ifn}' contains...", ptirfile.summary())
+    debug("info", f"File '{ifn}' contains...", ptirfile.summary())
 
 if __name__ == "__main__":
     ### set debug level to show everything
@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     ### find ptir files
     ptirfilenames = glob.glob(f"{INPUT_DIRECTORY}/*.ptir")
-    debug("PTIR files for testing:", "\n".join(ptirfilenames))
+    debug("info", "PTIR files for testing:", "\n".join(ptirfilenames))
 
     ### read each ptir file to container dicts
     for ifn in ptirfilenames:
