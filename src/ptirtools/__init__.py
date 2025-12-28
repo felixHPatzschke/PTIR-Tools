@@ -11,3 +11,4 @@ import ptirtools.debugging
 
 # expose core functionality here
 from ptirtools.debugging import debug
+from ptirtools.files import PTIRFile

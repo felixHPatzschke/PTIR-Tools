@@ -20,19 +20,9 @@ INPUT_DIRECTORY = "./testing/ptirfiles"
 OUTPUT_DIRECTORY = "./testing/output"
 
 
-def summarize_ptirfile(ifn:str):
-    h5file = h5py.File(ifn, 'r')
-    ptirdict = ptir.dicttools.h5Group2Dict( h5file, h5file, [] )
-    h5file.close()
-
-    type_uuids = {}
-    for muuid,m in ptirdict["MEASUREMENTS"].items():
-        t = m['attribs']['TYPE'].decode("UTF-8")
-        if t not in type_uuids:
-            type_uuids[t] = []
-        type_uuids[t].append(muuid)
-    
-    debug(f"File '{ifn}' contains...", "\n".join([ f"- {len(uuids)} {t}(s)" for t,uuids in type_uuids.items() ]))
+def test_load_ptirfile(ifn:str):
+    ptirfile = ptir.PTIRFile(ifn)
+    debug(f"File '{ifn}' contains...", ptirfile.summary())
 
 if __name__ == "__main__":
     ### set debug level to show everything
@@ -44,6 +34,5 @@ if __name__ == "__main__":
 
     ### read each ptir file to container dicts
     for ifn in ptirfilenames:
-        summarize_ptirfile(ifn)
-    
+        test_load_ptirfile(ifn)
         
