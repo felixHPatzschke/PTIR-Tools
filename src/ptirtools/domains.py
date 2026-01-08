@@ -5,6 +5,62 @@ import numpy as np
 
 
 
+class RasterizedLateralDomain:
+    def __init__(self):
+        ### dimensions in pixels
+        self.width_px = 0
+        self.height_px = 0
+        ### lateral position in micrometers
+        self.x_microns = 0
+        self.y_microns = 0
+        ### lateral extent in micrometers
+        self.width_microns = 0
+        self.height_microns = 0
+    
+    def from_image_measurement(self, datashape:tuple[int,...], attrs:dict):
+        ### dimensions in pixels
+        self.width_px = datashape[1]
+        self.height_px = datashape[0]
+
+        ### lateral position in micrometers
+        self.x_microns = attrs['PositionX'][0]
+        self.y_microns = attrs['PositionY'][0]
+
+        ### lateral extent in micrometers
+        self.width_microns = attrs['ImageWidth'][0]
+        self.height_microns = attrs['ImageHeight'][0]
+
+    def extent(self) -> tuple[float,float,float,float]:
+        """
+        Compute the extent tuple for `pyplot.imshow()`.
+        
+        :param self: The image measurement domain object.
+        :return: A tuple of floats to pass into the `extent` argument of `pyplot.imshow()`.
+        :rtype: tuple[float, float, float, float]
+        """
+        return (
+            self.x_microns - 0.5*self.width_microns,
+            self.x_microns + 0.5*self.width_microns,
+            self.y_microns - 0.5*self.height_microns,
+            self.y_microns + 0.5*self.height_microns,
+        )
+    
+    def to_tuple(self) -> tuple:
+        return (str(type(self)), self.width_px, self.height_px, self.x_microns, self.y_microns, self.width_microns, self.height_microns)
+
+    def __eq__(self, other:RasterizedLateralDomain) -> bool:
+        return self.to_tuple() == other.to_tuple()
+    
+    def __hash__(self):
+        return hash(self.to_tuple())
+
+    def __repr__(self):
+        return f"<{', '.join([str(x) for x in self.to_tuple()])}>"
+
+
+
+
+
 # Abstract Domain Class
 class AbstractDomain:
     """
