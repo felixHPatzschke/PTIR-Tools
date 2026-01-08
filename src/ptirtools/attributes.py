@@ -5,6 +5,12 @@ import numpy as np
 from ptirtools.debugging import debug
 
 
+
+def attrs_to_dict(group:h5py.Group):
+    return { key:value for key,value in group.attrs.items() }
+
+
+
 ### Here, we define a helper class to specify how attributes are de-serialized (and later serialized).
 ### The classes representing the datasets will then only need to have a specification about which attributes they use.
 class AttributeSpec:
