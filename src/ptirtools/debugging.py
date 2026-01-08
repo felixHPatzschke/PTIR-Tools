@@ -51,40 +51,43 @@ def debug(*args) -> None:
             msg = "\n".join( [ str(a) for a in args ] )
 
     LEVEL = DEBUG_LEVELS.get(level.lower(), DEBUG_LEVELS["debug info"])
+    if LEVEL.suppressed:
+        return None
     
+    ### initialize trackers for tabbing
     right_shift = { "traceback":0 , "level":0 }
     
-    if not LEVEL.suppressed:
-        print( LEVEL.style_setup, end='', file=sys.stderr )
-        
-        if LEVEL.print_level: 
-            #right_shift["level"] = len( LEVEL.name.upper() ) + 2
-            msg = f"{LEVEL.name.upper()}: " + msg
-        
-        if LEVEL.traceback != 0:
-            cf = inspect.currentframe()
-            of = inspect.getouterframes(cf)
-            if LEVEL.traceback != -1:
-                of = of[:LEVEL.traceback+1]
-            of = of[::-1]
-            traceback_lines = [ frame.filename.replace('\\','/').split('/')[-1] + " in line " + str(frame.lineno) + ":\t" for frame in of[:-1] ]
-            if LEVEL.print_function:
-                traceback_functions = [ f"{str(frame.function)+'():' if str(frame.function)[0] != '<' else ''}" for frame in of[:-1] ]
-                for i in range(len(traceback_lines)-1):
-                    traceback_lines[i] += traceback_functions[i]
-                msg = traceback_functions[-1] + "\n" + msg
-            right_shift["traceback"] = len( traceback_lines[-1] )
-            print( "\n".join( traceback_lines ), end='', file=sys.stderr )
-        
-        if '\n' in msg:
-            indent_str = "\n"
-            if right_shift["traceback"] > 0:
-                indent_str += " "*right_shift["traceback"] + "\t"
-            indent_str += " "*right_shift["level"]
-            msg = msg.replace("\n", indent_str)
-        print( msg, end='', file=sys.stderr )
-        
-        print( LEVEL.style_reset, file=sys.stderr )
+    ### set terminal text display style
+    print( LEVEL.style_setup, end='', file=sys.stderr )
+    
+    if LEVEL.print_level: 
+        #right_shift["level"] = len( LEVEL.name.upper() ) + 2
+        msg = f"{LEVEL.name.upper()}: " + msg
+    
+    if LEVEL.traceback != 0:
+        cf = inspect.currentframe()
+        of = inspect.getouterframes(cf)
+        if LEVEL.traceback != -1:
+            of = of[:LEVEL.traceback+1]
+        of = of[::-1]
+        traceback_lines = [ frame.filename.replace('\\','/').split('/')[-1] + " in line " + str(frame.lineno) + ":\t" for frame in of[:-1] ]
+        if LEVEL.print_function:
+            traceback_functions = [ f"{str(frame.function)+'():' if str(frame.function)[0] != '<' else ''}" for frame in of[:-1] ]
+            for i in range(len(traceback_lines)-1):
+                traceback_lines[i] += traceback_functions[i]
+            msg = traceback_functions[-1] + "\n" + msg
+        right_shift["traceback"] = len( traceback_lines[-1] )
+        print( "\n".join( traceback_lines ), end='', file=sys.stderr )
+    
+    if '\n' in msg:
+        indent_str = "\n"
+        if right_shift["traceback"] > 0:
+            indent_str += " "*right_shift["traceback"] + "\t"
+        indent_str += " "*right_shift["level"]
+        msg = msg.replace("\n", indent_str)
+    print( msg, end='', file=sys.stderr )
+    
+    print( LEVEL.style_reset, file=sys.stderr )
 
     
 def suppress_debug_levels(level:int|str) -> None:
