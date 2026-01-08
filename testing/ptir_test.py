@@ -3,7 +3,6 @@
 import sys
 import os
 import glob
-import h5py
 
 ### add src directory to library paths
 path = os.path.abspath(os.path.join('.', 'src'))
@@ -20,11 +19,23 @@ INPUT_DIRECTORY = "./testing/ptirfiles"
 OUTPUT_DIRECTORY = "./testing/output"
 
 
+def test_summarize_measurement(m):
+    debug( "info",
+        f"measurement '{m.uuid}':",
+        f"type: {type(m)}",
+        f"data shape: {m.data.shape}",
+    )
+
+
 def test_load_ptirfile(ifn:str):
     ptirfile = ptir.PTIRFile(ifn)
     debug("info", f"File '{ifn}' contains...", ptirfile.summary())
 
-if __name__ == "__main__":
+    test_summarize_measurement(ptirfile.backgrounds[0])
+    test_summarize_measurement(ptirfile.measurements[0])
+    test_summarize_measurement(ptirfile.measurements[-1])    
+
+def test():
     ### set debug level to show everything
     ptir.debugging.suppress_debug_levels(0)
 
@@ -36,3 +47,22 @@ if __name__ == "__main__":
     for ifn in ptirfilenames:
         test_load_ptirfile(ifn)
         
+    ### read all files again but into one file object
+    PTIRFILE = ptir.PTIRFile()
+    for ifn in ptirfilenames:
+        PTIRFILE.safe_load(ifn)
+    debug(f"PTIR files contain...", PTIRFILE.summary())
+
+    ### find all unique image domains
+    imagedomains = set()
+    for measurement in PTIRFILE.measurements:
+        if hasattr(measurement, "image_domain"):
+            imagedomains.add(measurement.image_domain)
+    
+    infostring = f"{len(imagedomains)} unique ImageMeasurementDomains:"
+    for imd in imagedomains:
+        infostring += f"\n- {imd}"
+    debug(infostring)
+
+if __name__ == "__main__":
+    test()
