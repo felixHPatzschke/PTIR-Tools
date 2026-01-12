@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ptirtools",
-    version="0.1.0",
+    version="0.5.0",
     description="PTIR Tools",
     author="Felix H. Patzschke",
     packages=find_packages(where="src"),
@@ -13,7 +13,6 @@ setup(
         "numpy>=2.2",
         "scipy>=1.15",
         "matplotlib>=3.10",
-        "re>=2.2",
         "colorama"
     ]
 )

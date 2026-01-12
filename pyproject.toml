@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ptirtools"
-version = "0.1.0"
+version = "0.5.0"
 description = "PTIR Tools"
-authors = [ { name = Felix H. Patzschke" } ]
+authors = [ { name = "Felix H. Patzschke" } ]
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [
@@ -14,6 +14,5 @@ dependencies = [
     "numpy>=2.2",
     "scipy>=1.15",
     "matplotlib>=3.10",
-    "re>=2.2",
     "colorama"
 ]
