@@ -3,9 +3,28 @@ import numpy as np
 
 
 
+class HashableDomain:
+    __slots__ = tuple()
+
+    def __init__(self):
+        pass
+
+    def to_tuple(self) -> tuple:
+        return (str(type(self)), *(getattr(self,slot) for slot in self.__slots__))
+    
+    def __eq__(self, other:HashableDomain) -> bool:
+        return self.to_tuple() == other.to_tuple()
+    
+    def __hash__(self):
+        return hash(self.to_tuple())
+    
+    def __repr__(self):
+        return f"<{', '.join([str(x) for x in self.to_tuple()])}>"
 
 
-class RasterizedLateralDomain:
+class RasterizedLateralDomain(HashableDomain):
+    __slots__ = ('width_px', 'height_px', 'x_microns', 'y_microns', 'width_microns', 'height_microns')
+
     def __init__(self):
         ### dimensions in pixels
         self.width_px = 0
@@ -44,22 +63,66 @@ class RasterizedLateralDomain:
             self.y_microns - 0.5*self.height_microns,
             self.y_microns + 0.5*self.height_microns,
         )
+
+
+class GenericSpectralDomain:
+    pass
+
+
+class EquidistantSpectralDomain(HashableDomain,GenericSpectralDomain):
+    """
+    Encodes a Spectral Domain where samples are evenly spaced over some interval.
+    Only starting point, sample spacing and number of samples are stored.
+    """
+
+    __slots__ = ('start', 'increment', 'n')
+
+    def __init__(self):
+        pass
+
+    def from_spectrum_measurement(self, datashape:tuple[int,...], attrs:dict):
+        self.start = attrs['XStart'][0]
+        self.increment = attrs['XIncrement'][0]
+        self.n = datashape[0]
     
-    def to_tuple(self) -> tuple:
-        return (str(type(self)), self.width_px, self.height_px, self.x_microns, self.y_microns, self.width_microns, self.height_microns)
+    def to_array(self):
+        return np.linspace(
+            self.start, 
+            self.start + (self.n-1) * self.increment,
+            self.n
+        )
 
-    def __eq__(self, other:RasterizedLateralDomain) -> bool:
-        return self.to_tuple() == other.to_tuple()
+    def __len__(self) -> int:
+        return self.n
+
+
+class SampledSpectralDomain(HashableDomain,GenericSpectralDomain):
+    """
+    Encodes a Spectral Domain where samples are evenly spaced over some interval.
+    Only starting point, sample spacing and number of samples are stored.
+    """
+
+    __slots__ = ('samples')
+
+    def __init__(self, samples=None):
+        self.samples = np.array([])
+        if samples is not None:
+            self.set_samples(samples)
+
+    def set_samples(self, samples):
+        self.samples = np.array(samples)
     
-    def __hash__(self):
-        return hash(self.to_tuple())
+    def to_array(self):
+        return np.copy(self.samples)
 
-    def __repr__(self):
-        return f"<{', '.join([str(x) for x in self.to_tuple()])}>"
-
-
+    def __len__(self) -> int:
+        return len(self.samples)
 
 
+
+
+
+### --- ### --- ###
 
 # Abstract Domain Class
 class AbstractDomain:
@@ -94,33 +157,33 @@ class SpectralPoint(AbstractDomain):
     def __hash__(self):
         return hash(self.__repr__())
 
-class EquidistantSpectralDomain(AbstractDomain):
-    """
-    Encodes a Spectral Domain where samples are evenly spaced over some interval.
-    Only starting point, sample spacing and number of samples are stored.
-    """
-    DIMENSION = 1
-    
-    def __init__(self, start:float, increment:float, N:int):
-        self.start = start
-        self.increment = increment
-        self.N = N
-
-    def to_arrays(self) -> np.ndarray:
-        return np.linspace(
-            self.start, 
-            self.start + (self.N-1) * self.increment,
-            self.N
-        )
-
-    def __len__(self) -> int:
-        return self.N
-
-    def __repr__(self) -> str:
-        return f"<EquidistantSpectralDomain: ν0={self.start}cm^-1, dν={self.increment}cm^-1, N={self.N}>"
-    
-    def __hash__(self):
-        return hash(self.__repr__())
+#class EquidistantSpectralDomain(AbstractDomain):
+#    """
+#    Encodes a Spectral Domain where samples are evenly spaced over some interval.
+#    Only starting point, sample spacing and number of samples are stored.
+#    """
+#    DIMENSION = 1
+#    
+#    def __init__(self, start:float, increment:float, N:int):
+#        self.start = start
+#        self.increment = increment
+#        self.N = N
+#
+#    def to_arrays(self) -> np.ndarray:
+#        return np.linspace(
+#            self.start, 
+#            self.start + (self.N-1) * self.increment,
+#            self.N
+#        )
+#
+#    def __len__(self) -> int:
+#        return self.N
+#
+#    def __repr__(self) -> str:
+#        return f"<EquidistantSpectralDomain: ν0={self.start}cm^-1, dν={self.increment}cm^-1, N={self.N}>"
+#    
+#    def __hash__(self):
+#        return hash(self.__repr__())
 
 class ArbitrarySpectralDomain(AbstractDomain):
     """
