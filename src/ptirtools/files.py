@@ -217,7 +217,9 @@ class PTIRFile:
 
 
     def __filter_single(self, uuids, f:filt.FilterSpec):
-        return [ uuid for uuid in uuids if f.match(self.all_measurements[uuid]) ]
+        result = [ uuid for uuid in uuids if f.match(self.all_measurements[uuid]) ]
+        debug("trace2", f"filtered UUIDs: {len(uuids)} -> {len(result)}")
+        return result
     
     def filter(self, uuids, *filters:tuple[filt.FilterSpec]):
         filtered_uuids = uuids
@@ -261,7 +263,21 @@ class PTIRFile:
 
         return UUIDS,INDICES_ND,AXES
 
-            
+    def group(self, uuids:Iterable[str], *specs:tuple[filt.GroupingSpec]):
+        """
+        Group measurements in the file by some 
+        
+        :param self: reference to the managing PTIRFile object
+        :param uuids: sequence of uuids specifying measurements
+        :type uuids: Iterable[str]
+        :param specs: sequence of grouping specifications
+        :type specs: tuple[filt.GroupingSpec]
+        """
+
+        
+
+        ### TODO!
+        return None
 
     # def group_measurements_with_complementary_channels(self):
     #     self.group_optir_spectra_with_complementary_channels()

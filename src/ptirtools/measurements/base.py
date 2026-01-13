@@ -102,12 +102,24 @@ class FLPTIRImage(GenericBasicMeasurement):
         temperature_celsius = ('Temperature', lambda v : v[0] ),
     )
 
+    def __data_convert_pixel_format(self):
+        ### checks...
+        assert self.data.dtype == np.uint8
+        assert self.data.shape[-1] == 4
+        reinterpreted_view = self.data.view(np.float32).reshape(self.data.shape[:-1])
+        self.data = reinterpreted_view
+        ### TODO: generalize
+
     def __init__(self, uuid:str, TYPE:str, group:h5py.Group):
         super().__init__(uuid, TYPE, group)
         self.lateral_domain = domains.RasterizedLateralDomain()
         self.lateral_domain.from_image_measurement(self.data.shape, self.attrs)
-
         self.fluorescence_channel = channels.FluorescenceMeasurementChannel(attrs_to_dict(group['Channel']))
+
+        try:
+            self.__data_convert_pixel_format()
+        except AssertionError:
+            debug("warning", "one or more assertions failed")
 
 
 class GenericOPTIRMeasurement(GenericBasicMeasurement):
