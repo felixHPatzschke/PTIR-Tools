@@ -3,7 +3,7 @@ import numpy as np
 import re as regex
 import h5py
 
-from ptirtools.debugging import debug
+from ptirtools.misc.debugging import debug
 
 
 ### Convert an h5py.Group to a nested dictionary, resolving references

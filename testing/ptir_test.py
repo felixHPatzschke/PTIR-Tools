@@ -4,6 +4,9 @@ import sys
 import os
 import glob
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
 ### add src directory to library paths
 path = os.path.abspath(os.path.join('.', 'src'))
 if path not in sys.path:
@@ -17,23 +20,7 @@ from ptirtools import debug
 ### set some constants
 INPUT_DIRECTORY = "./testing/ptirfiles"
 OUTPUT_DIRECTORY = "./testing/output"
-
-
-def test_summarize_measurement(m):
-    debug( "info",
-        f"measurement '{m.uuid}':",
-        f"type: {type(m)}",
-        f"data shape: {m.data.shape}",
-    )
-
-
-def test_load_ptirfile(ifn:str):
-    ptirfile = ptir.PTIRFile(ifn)
-    debug("info", f"File '{ifn}' contains...", ptirfile.summary())
-
-    test_summarize_measurement(ptirfile.backgrounds[0])
-    test_summarize_measurement(ptirfile.measurements[0])
-    test_summarize_measurement(ptirfile.measurements[-1])    
+PLOTS = True
 
 def test():
     ### set debug level to show everything
@@ -43,11 +30,7 @@ def test():
     ptirfilenames = glob.glob(f"{INPUT_DIRECTORY}/*.ptir")
     debug("info", "PTIR files for testing:", "\n".join(ptirfilenames))
 
-    ### read each ptir file to container dicts
-    for ifn in ptirfilenames:
-        test_load_ptirfile(ifn)
-        
-    ### read all files again but into one file object
+    ### read all files into a single file object
     PTIRFILE = ptir.PTIRFile()
     for ifn in ptirfilenames:
         PTIRFILE.safe_load(ifn)
@@ -55,7 +38,7 @@ def test():
 
     ### find all unique image domains
     imagedomains = set()
-    for measurement in PTIRFILE.measurements:
+    for measurement in PTIRFILE.all_measurements.values():
         if hasattr(measurement, "image_domain"):
             imagedomains.add(measurement.image_domain)
     
@@ -63,6 +46,36 @@ def test():
     for imd in imagedomains:
         infostring += f"\n- {imd}"
     debug(infostring)
+
+    if PLOTS:
+        for imd in imagedomains:
+            images = [ measurement for measurement in PTIRFILE.all_measurements.values() if hasattr(measurement,"image_domain") ]
+            images = [ image for image in images if image.image_domain == imd and ( len(image.data.shape) == 2 or ( len(image.data.shape) == 3 and image.data.shape[2] in {1,3,4} ) ) ]
+            if images:
+                fig = plt.figure(figsize=(6,6))
+                ax = fig.add_subplot()
+                ax.imshow( images[0].data, extent=images[0].image_domain.extent() )
+                ax.set_xlabel("x [µm]")
+                ax.set_ylabel("y [µm]")
+                fig.savefig(f"{OUTPUT_DIRECTORY}/Image {images[0].uuid}.png", dpi=300)
+                plt.close(fig)
+                debug("info", f"saved image {images[0].uuid}")
+            else:
+                debug("info", f"No valid images with domain {imd}")
+
+    ### find all unique spectroscopic domains
+    specdomains = set()
+    for measurement in PTIRFILE.all_measurements.values():
+        if hasattr(measurement, "spectral_domain"):
+            specdomains.add(measurement.spectral_domain)
+    
+    infostring = f"{len(specdomains)} unique Spectral Measurement Domains:"
+    for sd in specdomains:
+        infostring += f"\n- {sd}"
+    debug(infostring)
+
+    groups_of_matching_images = PTIRFILE.find_complementary_optir_images()
+    debug( f"{len(groups_of_matching_images)} groups of matching images." )
 
 if __name__ == "__main__":
     test()

@@ -2,7 +2,7 @@ from enum import IntFlag
 
 import numpy as np
 
-from ptirtools.debugging import debug
+from ptirtools.misc.debugging import debug
 
 
 class ModulatedSignalComponent(IntFlag):

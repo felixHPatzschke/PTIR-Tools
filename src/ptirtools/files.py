@@ -5,8 +5,10 @@ from collections.abc import Iterable
 import numpy as np
 import h5py
 
-import ptirtools.measurements as mmts
-from ptirtools.debugging import debug
+import ptirtools.measurements.base as mmts
+import ptirtools.measurements.filter as filt
+
+from ptirtools.misc.debugging import debug
 
 
 
@@ -185,25 +187,26 @@ class PTIRFile:
     #    
     #    return rawgroups
     
-    def __separate_measurements_by_attribute(self, measurement_uuids, attribute):
+    def __separate_measurements_by_attribute(self, measurement_uuids, attribute_spec:filt.AttributeSpec):
         result = {}
-        sub_attributes_from_path = attribute.split('.')
         for uuid in measurement_uuids:
-            measurement = self.all_measurements[uuid]
-            attribute_value_reference = measurement
-            for sub_attribute in sub_attributes_from_path:
-                attribute_value_reference = getattr( attribute_value_reference, sub_attribute )
+            attribute_value_reference = attribute_spec(self.all_measurements[uuid])
             if attribute_value_reference not in result:
-                #debug("Warning", f"Measurement '{uuid}': unexpected {attribute}: {av}")
                 result[attribute_value_reference] = []
             result[attribute_value_reference].append(uuid)
         return result
 
-    def separate_measurements_by_attributes(self, measurement_uuids, *attributes):
+    def separate_measurements_by_attributes(self, measurement_uuids, *attributes:tuple[str|filt.AttributeSpec]):
         if len(attributes)==0:
             raise ValueError("Provide at least one field to separate by.")
 
-        by_first_attribute = self.__separate_measurements_by_attribute(measurement_uuids, attributes[0])
+        first_attrib_spec = attributes[0]
+        if isinstance(first_attrib_spec, filt.AttributeSpec):
+            pass
+        else:
+            first_attrib_spec = filt.AttributeSpec(first_attrib_spec)
+
+        by_first_attribute = self.__separate_measurements_by_attribute(measurement_uuids, first_attrib_spec)
         if len(attributes)==1:
             return by_first_attribute
         
@@ -213,39 +216,13 @@ class PTIRFile:
         return result
 
 
-    def __filter_single(self, uuids, attr, spec):
-        result = []
-
-        sub_attributes = attr.split('.')
-        for uuid in uuids:
-            measurement = self.all_measurements[uuid]
-            attr_val_ref = measurement
-            for sub_attr in sub_attributes:
-                attr_val_ref = getattr( attr_val_ref, sub_attr )
-            ### reference to value of desired attribute obtained
-
-            if spec is None:
-                ### assume all values pass the filter
-                result.append(uuid)
-            elif callable(spec):
-                ### assume spec is a function that checks whether the value of the attribute matches the filter
-                if spec(attr_val_ref):
-                    result.append(uuid)
-            else:
-                ### assume spec is a specific value that the value of the attribute needs to be equal to
-                if attr_val_ref == spec:
-                    result.append(uuid)
-        return result
+    def __filter_single(self, uuids, f:filt.FilterSpec):
+        return [ uuid for uuid in uuids if f.match(self.all_measurements[uuid]) ]
     
-    
-    def filter(self, uuids, filter_spec:dict):
-        if len(filter_spec) == 0:
-            return uuids
-        
+    def filter(self, uuids, *filters:tuple[filt.FilterSpec]):
         filtered_uuids = uuids
-        for attr, spec in filter_spec.items():
-            filtered_uuids = self.__filter_single(filtered_uuids, attr, spec)
-        
+        for f in filters:
+            filtered_uuids = self.__filter_single(filtered_uuids, f)
         return filtered_uuids
 
 

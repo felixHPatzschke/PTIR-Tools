@@ -2,7 +2,7 @@
 import h5py
 import numpy as np
 
-from ptirtools.debugging import debug
+from ptirtools.misc.debugging import debug
 
 
 

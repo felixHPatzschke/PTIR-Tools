@@ -4,11 +4,11 @@ from dataclasses import dataclass
 import numpy as np
 import h5py
 
-from ptirtools.attributes import attrs_to_dict
-from ptirtools.debugging import debug
-import ptirtools.domains as domains
-import ptirtools.channels as channels
-import ptirtools.measurement_metadata as meta
+from ptirtools.measurements.attributes import attrs_to_dict
+from ptirtools.misc.debugging import debug
+import ptirtools.domains.domains as domains
+import ptirtools.measurements.channels as channels
+import ptirtools.measurements.metadata as meta
 
 
 class GenericBasicMeasurement:
@@ -110,7 +110,41 @@ class FLPTIRImage(GenericBasicMeasurement):
         self.fluorescence_channel = channels.FluorescenceMeasurementChannel(attrs_to_dict(group['Channel']))
 
 
-class OPTIRImage(GenericBasicMeasurement):
+class GenericOPTIRMeasurement(GenericBasicMeasurement):
+    EXPECTED_TYPE:str = None
+    ATTRIBUTE_MAP:dict = dict( 
+        label = ('Label', lambda v : v.decode('UTF-8') ),
+        timestamp = ('Timestamp', lambda v : v[0] ),
+        humidity_percent = ('Humidity', lambda v : v[0] ),
+        temperature_celsius = ('Temperature', lambda v : v[0] ),
+    )
+
+    def __init__(self, uuid:str, TYPE:str, group:h5py.Group):
+        super().__init__(uuid, TYPE, group)
+        self.optir_channel = channels.OPTIRMeasurementChannel(attrs_to_dict(group['Channel']))
+        self.configuration = meta.OPTIRConfiguration(self.attrs)
+        self.vertical_position = meta.OPTIRVerticalPosition(self.attrs)
+        self.lateral_position = meta.LateralPosition(self.attrs)
+        self.lateral_domain = None ### TODO: type annotation
+        self.spectral_domain : domains.GenericSpectralDomain = None
+
+    def complements_channel(self, other:GenericOPTIRMeasurement):
+        res = True
+        #res &= self.lateral_domain == other.lateral_domain
+        #res &= all( self.attrs[key]==other.attrs[key] for key in ('Wavenumber', 'TopFocus', 'BottomFocus', 'IrPulseWidth', 'IrPulseRate', 'IrPower', 'IrBeamPath', 'Detector') )
+        res &= self.optir_channel.complements(other.optir_channel)
+        return res
+    
+    def debug_info(self) -> str:
+        res = ""
+        res += f"{self.TYPE} '{self.uuid}'\n"
+        res += f"{self.configuration}\n"
+        res += f"{self.vertical_position}\n"
+        res += f"{self.optir_channel}"
+        return res
+
+
+class OPTIRImage(GenericOPTIRMeasurement):
     EXPECTED_TYPE_STR = "OPTIRImage"
     ATTRIBUTE_MAP:dict = dict( 
         label = ('Label', lambda v : v.decode('UTF-8') ),
@@ -122,24 +156,22 @@ class OPTIRImage(GenericBasicMeasurement):
 
     def __init__(self, uuid:str, TYPE:str, group:h5py.Group):
         super().__init__(uuid, TYPE, group)
-        self.lateral_domain = domains.RasterizedLateralDomain()
-        self.lateral_domain.from_image_measurement(self.data.shape, self.attrs)
-
-        self.optir_channel = channels.OPTIRMeasurementChannel(attrs_to_dict(group['Channel']))
-        self.configuration = meta.OPTIRConfiguration(self.attrs)
-        self.vertical_position = meta.OPTIRVerticalPosition(self.attrs)
-        #self.lateral_position = meta.LateralPosition(self.attrs)
-
+        #self.lateral_domain = domains.RasterizedLateralDomain()
+        #self.lateral_domain.from_image_measurement(self.data.shape, self.attrs)
+        self.lateral_domain = domains.lateral_domain_for_image_measurement(self.data.shape, self.attrs)
+        self.spectral_domain = domains.SpectralSingletonDomain(self.wavenumber)
     
-    def complements_channel(self, other:OPTIRImage):
-        res = True
-        res &= self.lateral_domain == other.lateral_domain
-        res &= all( self.attrs[key]==other.attrs[key] for key in ('Wavenumber', 'TopFocus', 'BottomFocus', 'IrPulseWidth', 'IrPulseRate', 'IrPower', 'IrBeamPath', 'Detector') )
-        res &= self.optir_channel.complements(other.optir_channel)
+    def debug_info(self) -> str:
+        res = ""
+        res += f"{self.TYPE} '{self.uuid}'\n"
+        res += f"{self.configuration}\n"
+        res += f"{self.lateral_domain}\n"
+        res += f"{self.vertical_position}\n"
+        res += f"{self.optir_channel}"
         return res
 
-
-class OPTIRSpectrum(GenericBasicMeasurement):
+    
+class OPTIRSpectrum(GenericOPTIRMeasurement):
     EXPECTED_TYPE_STR = "OPTIRSpectrum"
     ATTRIBUTE_MAP:dict = dict( 
         label = ('Label', lambda v : v.decode('UTF-8') ),
@@ -150,27 +182,14 @@ class OPTIRSpectrum(GenericBasicMeasurement):
 
     def __init__(self, uuid:str, TYPE:str, group:h5py.Group):
         super().__init__(uuid, TYPE, group)
-        #self.init_spectral_domain()
-        self.spectral_domain = domains.EquidistantSpectralDomain()
-        self.spectral_domain.from_spectrum_measurement(self.data.shape, self.attrs)
 
-        self.optir_channel = channels.OPTIRMeasurementChannel(attrs_to_dict(group['Channel']))
-        self.configuration = meta.OPTIRConfiguration(self.attrs)
-        self.vertical_position = meta.OPTIRVerticalPosition(self.attrs)
-        self.lateral_position = meta.LateralPosition(self.attrs)
+        #self.spectral_domain = domains.EquidistantSpectralDomain()
+        #self.spectral_domain.from_spectrum_measurement(self.data.shape, self.attrs)
+        self.spectral_domain = domains.spectrum_measurement_domain(self.data.shape, self.attrs)
+        self.lateral_domain = domains.lateral_domain_for_spectrum_measurement(self.attrs)
 
         ### TODO: ParticleData
 
-    #def init_spectral_domain(self):
-    #    self.domain = domains.EquidistantSpectralDomain(
-    #        self.attrs['XStart'][0],
-    #        self.attrs['XIncrement'][0],
-    #        self.data.shape[0]
-    #    )
-    #
-    #    ### TODO: Channel, ParticleData
-    #    self.optir_channel = OPTIRMeasurementChannel(self.attrs)
-    
     def XY(self) -> tuple[np.ndarray, np.ndarray]:
         return ( self.spectral_domain.to_array(), self.data )
     

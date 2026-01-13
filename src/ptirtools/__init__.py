@@ -2,13 +2,16 @@
 
 __version__ = "0.5.0"
 
-# expose sub-modules here
-import ptirtools.datasets
-import ptirtools.plotting
-import ptirtools.dicttools
-import ptirtools.peaks
-import ptirtools.debugging
+# # expose directory sub-modules
+# import ptirtools.analysis
+# import ptirtools.measurements
+# import ptirtools.domains
+# import ptirtools.misc
+# import ptirtools.misc
 
-# expose core functionality here
-from ptirtools.debugging import debug
+# expose single-file sub-modules
+import ptirtools.datasets
+
+# expose core functionality directly
+from ptirtools.misc.debugging import debug
 from ptirtools.files import PTIRFile

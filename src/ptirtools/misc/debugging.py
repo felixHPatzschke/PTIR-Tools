@@ -19,7 +19,7 @@ class DebugLevel:
         self.suppressed = b
     
     def __repr__(self):
-        return f"< DebugLevel {self.style_setup} {self.numeric_value} (\"{self.name}\") {self.style_reset} | traceback: {self.traceback} | {'suppressed' if self.suppressed else 'active'} >"
+        return f"<DebugLevel {self.style_setup} {self.numeric_value} '{self.name}' {self.style_reset} | traceback: {self.traceback} | {'suppressed' if self.suppressed else 'active'}>"
 
 
 DEBUG_LEVELS = { dl.name.lower() : dl for dl in [
@@ -90,12 +90,45 @@ def debug(*args) -> None:
     print( LEVEL.style_reset, file=sys.stderr )
 
     
-def suppress_debug_levels(level:int|str) -> None:
+def suppress_debug_levels_up_to(level:int|str) -> None:
+    """
+    Set up the debugging tool to only show messages over a given level of severity.
+    
+    :param level: Numeric value or string representation of the highest debug level to ignore
+    :type level: int | str
+    """
     global DEBUG_LEVELS
     if isinstance(level, str):
         level = DEBUG_LEVELS[level.lower()].numeric_value if level.lower() in DEBUG_LEVELS else 3
     for key in DEBUG_LEVELS:
         DEBUG_LEVELS[key].suppress( DEBUG_LEVELS[key].numeric_value <= level )
+    
+    debug("info", "Debug Levels:", *(l.__repr__() for l in DEBUG_LEVELS.values()))
+
+
+def suppress_debug_levels(*levels:list[int|str]) -> None:
+    """
+    Set up the debugging tool to show messages of all severities except the ones specified.
+    
+    :param levels: list of specifications (either numerical value or string representation) of severity levels to ignore.
+    :type levels: list[int | str]
+    """
+    global DEBUG_LEVELS
+
+    numerical_values = set()
+    for level in levels:
+        if isinstance(level, str):
+            if level.lower() in DEBUG_LEVELS:
+                numerical_values.add( DEBUG_LEVELS[level.lower()].numeric_value )
+        elif isinstance(level, int):
+            numerical_values.add( level )
+        else:
+            debug("warning", f"'{level}' is not a valid specification for a debug level.")
+
+    for key in DEBUG_LEVELS:
+        DEBUG_LEVELS[key].suppress( DEBUG_LEVELS[key].numeric_value in numerical_values )
+
+    debug("info", "Debug Levels:", *(l.__repr__() for l in DEBUG_LEVELS.values()))
 
 
 ### by default, only show warnings and errors
