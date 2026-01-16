@@ -13,6 +13,7 @@ __pycache__/
 *.cpython-*
 
 # Documentation
+*.md
 doc/*
 !doc/*.md
 

@@ -1,0 +1,228 @@
+# Parameter Specifications for PTIR Assembly System
+#
+# This YAML file defines all standard parameter specifications used in the assembly system.
+# Each parameter specifies how to extract a value from measurements and how to interpret it.
+#
+# Format:
+#   parameter_name:
+#     attribute_spec: Path to attribute in measurement (dot-notation or string)
+#     is_quantitative: Whether parameter is numeric/sortable (true) or categorical (false)
+#     symbol: Short symbol for parameter (e.g., 'ν', 'z')
+#     name: Full human-readable name
+#     unit: Physical unit (e.g., 'cm⁻¹', 'µm')
+#     latex_symbol: LaTeX representation of symbol (e.g., '\nu')
+#     latex_unit: LaTeX representation of unit (e.g., '\mathrm{cm}^{-1}')
+
+# ============================================================================
+# SPATIAL PARAMETERS
+# ============================================================================
+
+lateral_position:
+  attribute_spec: "lateral_position"
+  is_quantitative: false
+  symbol: "r"
+  name: "Lateral Position"
+  unit: "µm"
+  latex_symbol: "r"
+  latex_unit: "µm"
+  description: "Spatial position on the sample surface"
+
+x_position:
+  attribute_spec: "lateral_position.x"
+  is_quantitative: true
+  symbol: "x"
+  name: "X Position"
+  unit: "µm"
+  latex_symbol: "x"
+  latex_unit: "µm"
+  description: "X-coordinate of lateral position"
+
+y_position:
+  attribute_spec: "lateral_position.y"
+  is_quantitative: true
+  symbol: "y"
+  name: "Y Position"
+  unit: "µm"
+  latex_symbol: "y"
+  latex_unit: "µm"
+  description: "Y-coordinate of lateral position"
+
+top_focus:
+  attribute_spec: "vertical_position.top_focus"
+  is_quantitative: true
+  symbol: "z"
+  name: "Top Focus Position"
+  unit: "µm"
+  latex_symbol: "z"
+  latex_unit: "µm"
+  description: "Vertical focus position (z-coordinate)"
+
+bottom_focus:
+  attribute_spec: "vertical_position.bottom_focus"
+  is_quantitative: true
+  symbol: "z_b"
+  name: "Bottom Focus Position"
+  unit: "µm"
+  latex_symbol: "z_b"
+  latex_unit: "µm"
+  description: "Bottom focus position for interferometry"
+
+# ============================================================================
+# SPECTRAL PARAMETERS
+# ============================================================================
+
+wavenumber:
+  attribute_spec: "wavenumber"
+  is_quantitative: true
+  symbol: "ν"
+  name: "Wavenumber"
+  unit: "cm⁻¹"
+  latex_symbol: "\\nu"
+  latex_unit: "\\mathrm{cm}^{-1}"
+  description: "Infrared wavenumber"
+
+spectral_domain:
+  attribute_spec: "spectral_domain"
+  is_quantitative: false
+  symbol: "λ"
+  name: "Spectral Domain"
+  unit: "varies"
+  latex_symbol: "\\lambda"
+  latex_unit: ""
+  description: "Spectral domain or wavelength range"
+
+# ============================================================================
+# CONFIGURATION PARAMETERS
+# ============================================================================
+
+ir_modulation_frequency:
+  attribute_spec: "optir_configuration.ir_pulse_rate"
+  is_quantitative: true
+  symbol: "f"
+  name: "IR Modulation Frequency"
+  unit: "Hz"
+  latex_symbol: "f"
+  latex_unit: "\\mathrm{Hz}"
+  description: "IR laser modulation/pulse frequency"
+
+ir_laser_power:
+  attribute_spec: "optir_configuration.ir_power"
+  is_quantitative: true
+  symbol: "P"
+  name: "IR Laser Power"
+  unit: "mW"
+  latex_symbol: "P"
+  latex_unit: "\\mathrm{mW}"
+  description: "IR laser power level"
+
+ir_pulse_width:
+  attribute_spec: "optir_configuration.ir_pulse_width"
+  is_quantitative: true
+  symbol: "τ"
+  name: "IR Pulse Width"
+  unit: "ns"
+  latex_symbol: "\\tau"
+  latex_unit: "\\mathrm{ns}"
+  description: "IR pulse width duration"
+
+probe_beam_path:
+  attribute_spec: "configuration.probe_beam_path"
+  is_quantitative: false
+  symbol: "path"
+  name: "Probe Beam Path"
+  unit: ""
+  latex_symbol: "path"
+  latex_unit: ""
+  description: "Probe beam path (transmission or reflection)"
+
+pump_probe_arrangement:
+  attribute_spec: "configuration.pump_probe_arrangement"
+  is_quantitative: false
+  symbol: "arr"
+  name: "Pump-Probe Arrangement"
+  unit: ""
+  latex_symbol: "arr"
+  latex_unit: ""
+  description: "Pump-probe arrangement (copropagation or counterpropagation)"
+
+# ============================================================================
+# TEMPORAL PARAMETERS
+# ============================================================================
+
+timestamp:
+  attribute_spec: "timestamp"
+  is_quantitative: true
+  symbol: "t"
+  name: "Timestamp"
+  unit: "s"
+  latex_symbol: "t"
+  latex_unit: "\\mathrm{s}"
+  description: "Measurement timestamp"
+
+# ============================================================================
+# ENVIRONMENTAL PARAMETERS
+# ============================================================================
+
+temperature:
+  attribute_spec: "temperature_celsius"
+  is_quantitative: true
+  symbol: "T"
+  name: "Temperature"
+  unit: "°C"
+  latex_symbol: "T"
+  latex_unit: "°\\mathrm{C}"
+  description: "Ambient temperature during measurement"
+
+humidity:
+  attribute_spec: "humidity_percent"
+  is_quantitative: true
+  symbol: "H"
+  name: "Relative Humidity"
+  unit: "%"
+  latex_symbol: "H"
+  latex_unit: "\\%"
+  description: "Relative humidity during measurement"
+
+# ============================================================================
+# MEASUREMENT TYPE PARAMETERS
+# ============================================================================
+
+optir_channel:
+  attribute_spec: "optir_channel.signal_component"
+  is_quantitative: false
+  symbol: "ch"
+  name: "OPTIR Channel"
+  unit: ""
+  latex_symbol: "ch"
+  latex_unit: ""
+  description: "OPTIR signal component (AMPL, PHAS, REAL, IMAG, etc.)"
+
+harmonic_order:
+  attribute_spec: "optir_channel.harmonic_order"
+  is_quantitative: true
+  symbol: "n"
+  name: "Harmonic Order"
+  unit: ""
+  latex_symbol: "n"
+  latex_unit: ""
+  description: "Harmonic order of measurement (1st, 2nd, etc.)"
+
+fluorescence_filter:
+  attribute_spec: "fluorescence_channel.filter"
+  is_quantitative: false
+  symbol: "filter"
+  name: "Fluorescence Filter"
+  unit: ""
+  latex_symbol: "F"
+  latex_unit: ""
+  description: "Fluorescence excitation/emission filter"
+
+measurement_type:
+  attribute_spec: "TYPE"
+  is_quantitative: false
+  symbol: "type"
+  name: "Measurement Type"
+  unit: ""
+  latex_symbol: "\\mathrm{type}"
+  latex_unit: ""
+  description: "Type of measurement (OPTIRImage, OPTIRSpectrum, etc.)"

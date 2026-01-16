@@ -59,7 +59,7 @@ class PTIRFile:
                         if not existing_is_also_background:
                             debug("Warning", message, "Existing measurement is not a background:", *existing_attrs)
                         else:
-                            debug("Info", message, "background already loaded:", *existing_attrs)
+                            debug("Info", message, "background already loaded:", uuid)
                     # in any case, skip
                     continue
                 

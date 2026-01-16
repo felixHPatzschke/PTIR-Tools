@@ -103,7 +103,7 @@ def suppress_debug_levels_up_to(level:int|str) -> None:
     for key in DEBUG_LEVELS:
         DEBUG_LEVELS[key].suppress( DEBUG_LEVELS[key].numeric_value <= level )
     
-    debug("info", "Debug Levels:", *(l.__repr__() for l in DEBUG_LEVELS.values()))
+    #debug("info", "Debug Levels:", *(l.__repr__() for l in DEBUG_LEVELS.values()))
 
 
 def suppress_debug_levels(*levels:list[int|str]) -> None:
@@ -128,7 +128,7 @@ def suppress_debug_levels(*levels:list[int|str]) -> None:
     for key in DEBUG_LEVELS:
         DEBUG_LEVELS[key].suppress( DEBUG_LEVELS[key].numeric_value in numerical_values )
 
-    debug("info", "Debug Levels:", *(l.__repr__() for l in DEBUG_LEVELS.values()))
+    #debug("info", "Debug Levels:", *(l.__repr__() for l in DEBUG_LEVELS.values()))
 
 
 ### by default, only show warnings and errors

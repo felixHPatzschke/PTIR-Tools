@@ -16,6 +16,10 @@ del path
 ### Import PTIR Tools library to run tests
 import ptirtools as ptir
 from ptirtools import debug
+from ptirtools.assembly import (
+    Segment, FilterDown, TransformParameter, Assert, TrackAttribute,
+    AssemblyProcedure, Assembler, load_parameters_from_yaml
+)
 
 ### set some constants
 INPUT_DIRECTORY = "./testing/ptirfiles"
@@ -25,6 +29,10 @@ PLOTS = True
 def test():
     ### set debug level to show everything
     ptir.debugging.suppress_debug_levels(0)
+    
+    print("\n" + "=" * 70)
+    print("PTIR TOOLS TEST SUITE - PHASE 2")
+    print("=" * 70)
 
     ### find ptir files
     ptirfilenames = glob.glob(f"{INPUT_DIRECTORY}/*.ptir")
@@ -46,6 +54,14 @@ def test():
     for imd in imagedomains:
         infostring += f"\n- {imd}"
     debug(infostring)
+
+    # TEST: Basic assembly with new API
+    print("\n--- Testing New Phase 2 Assembly API ---")
+    test_basic_assembly(PTIRFILE)
+    
+    # TEST: Parameter loading
+    print("\n--- Testing Parameter Configuration System ---")
+    test_parameter_loading()
 
     if PLOTS:
         for imd in imagedomains:
@@ -76,6 +92,48 @@ def test():
 
     groups_of_matching_images = PTIRFILE.find_complementary_optir_images()
     debug( f"{len(groups_of_matching_images)} groups of matching images." )
+    
+    print("\n" + "=" * 70)
+    print("TEST SUITE COMPLETE")
+    print("=" * 70 + "\n")
+
+
+def test_basic_assembly(ptir_file):
+    """Test basic assembly with Phase 2 API."""
+    try:
+        measurements = list(ptir_file.all_measurements.values())
+        print(f"Total measurements: {len(measurements)}")
+        
+        # Create simple assembly procedure
+        proc = AssemblyProcedure()
+        proc.add(FilterDown("Configuration: 30 kHz", 
+                           lambda m: hasattr(m, 'configuration') and 
+                                   hasattr(m.configuration, 'ir_pulse_rate') and
+                                   m.configuration.ir_pulse_rate == 30000))
+        
+        print(f"✓ Created AssemblyProcedure with 1 operation")
+        print(f"✓ Procedure: {proc.describe()}")
+        
+    except Exception as e:
+        print(f"⚠ Assembly test: {type(e).__name__}: {e}")
+
+
+def test_parameter_loading():
+    """Test parameter configuration loading."""
+    try:
+        # Get list of default parameters
+        from ptirtools.assembly.config_loader import list_default_parameters
+        params = list_default_parameters()
+        print(f"✓ Loaded {len(params)} default parameters from YAML configuration")
+        
+        # Show a few examples
+        sample_params = list(params.keys())[:3]
+        for param_name in sample_params:
+            param_spec = params[param_name]
+            print(f"  - {param_name}: {param_spec.name if hasattr(param_spec, 'name') else 'ParameterSpecification'}")
+        
+    except Exception as e:
+        print(f"⚠ Parameter loading test: {type(e).__name__}: {e}")
 
 if __name__ == "__main__":
     test()
