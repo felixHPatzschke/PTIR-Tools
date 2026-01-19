@@ -16,6 +16,7 @@ __pycache__/
 *.md
 doc/*
 !doc/*.md
+!Notes/
 
 # Testing Data
 testing/*/
