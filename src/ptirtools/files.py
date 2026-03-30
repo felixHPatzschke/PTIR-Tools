@@ -65,6 +65,9 @@ class PTIRFile:
                 
                 ### create and store the measurement object
                 typestr = h5file[supergroup][uuid].attrs['TYPE'].decode('UTF-8')
+                if typestr not in mmts.TYPE_CLASSES:
+                    debug("warning", f"Measurement Type '{typestr}' not recognized.", "Skipping.")
+                    continue
                 self.all_measurements[uuid] = mmts.TYPE_CLASSES.get(typestr, mmts.GenericBasicMeasurement)(
                     uuid=uuid, TYPE=typestr,
                     group=h5file[supergroup][uuid]
