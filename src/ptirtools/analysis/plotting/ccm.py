@@ -3,7 +3,7 @@
 import numpy as np
 
 from ptirtools.analysis.plotting.ccolors import ComplexNormalize
-from ptirtools.analysis.plotting.ccolors import ComplexColorTransform, ComplexColorTransformHSV
+from ptirtools.analysis.plotting.ccolors import ComplexColorTransform, ComplexColorTransformHSV, ComplexColorTransformLCh
 
 ### =======================
 ### PRE-DEFINED COLOUR MAPS
@@ -11,27 +11,59 @@ from ptirtools.analysis.plotting.ccolors import ComplexColorTransform, ComplexCo
 
 ### In these color maps, zero is mapped to colour with zero saturation (black / white / zero opacity)
 ### and the maximum magnitude is a fully saturated colour, the hue indicating the angle in the complex plane.
-light = ComplexColorTransformHSV("complex_hsv_light", angle_to_h = lambda a : a, mag_to_s = lambda m : m)
-dark  = ComplexColorTransformHSV("complex_hsv_dark",  angle_to_h = lambda a : a, mag_to_v = lambda m : m)
-alpha = ComplexColorTransformHSV("complex_hsv_alpha", angle_to_h = lambda a : a, mag_to_a = lambda m : m)
-
+hsv_light = ComplexColorTransformHSV("complex_hsv_light", angle_to_h = lambda a : a, mag_to_s = lambda m : m)
+hsv_dark  = ComplexColorTransformHSV("complex_hsv_dark",  angle_to_h = lambda a : a, mag_to_v = lambda m : m)
+hsv_alpha = ComplexColorTransformHSV("complex_hsv_alpha", angle_to_h = lambda a : a, mag_to_a = lambda m : m)
 
 ### In these color maps, zero is mapped to colour with zero saturation (black / white),
 ### the maximum magnitude is mapped to the opposite zero-saturation colour (white / black), 
 ### and values in-between have some saturation. Their hue indicates the angle in the complex plane.
-bw = ComplexColorTransformHSV(
+hsv_bw = ComplexColorTransformHSV(
     "complex_hsv_black_to_white",
     angle_to_h = lambda a : a, 
     mag_to_s = lambda m : np.clip(2*(1-m),0,1),
     mag_to_v = lambda m : np.clip(2*m,0,1)
 )
-wb = ComplexColorTransformHSV(
+hsv_wb = ComplexColorTransformHSV(
     "complex_hsv_white_to_black",
     angle_to_h = lambda a : a, 
     mag_to_s = lambda m : np.clip(2*m,0,1),
     mag_to_v = lambda m : np.clip(2*(1-m),0,1)
 )
 
+### Perceptually uniform color maps
+LCH_MAX_C = 70
+LCH_MAX_L = 95
+LCH_MIN_L = 10
+LCH_ANGLE_TO_H = lambda a : a*360.0
+LCH_MAGNITUDE_TO_C_DIVERGING_SMOOTH = lambda m: LCH_MAX_C * np.sin(np.pi * m)
+LCH_MAGNITUDE_TO_C_DIVERGING_SHARP = lambda m: LCH_MAX_C * np.clip(1 - 2*np.abs(m - 0.5), 0, 1)
+
+lch_light = ComplexColorTransformLCh(
+    "complex_lch_light",
+    angle_to_h = LCH_ANGLE_TO_H,
+    mag_to_L   = lambda m: LCH_MAX_L - 50*m,
+    mag_to_C   = lambda m: LCH_MAX_C*m
+)
+lch_dark = ComplexColorTransformLCh(
+    "complex_lch_dark",
+    angle_to_h = LCH_ANGLE_TO_H,
+    mag_to_L   = lambda m: LCH_MIN_L + 50*m,
+    mag_to_C   = lambda m: LCH_MAX_C*m
+)
+
+lch_bw = ComplexColorTransformLCh(
+    "complex_lch_black_to_white",
+    angle_to_h = LCH_ANGLE_TO_H,
+    mag_to_L = lambda m: LCH_MIN_L + (LCH_MAX_L-LCH_MIN_L)*m,
+    mag_to_C = LCH_MAGNITUDE_TO_C_DIVERGING_SMOOTH
+)
+lch_wb = ComplexColorTransformLCh(
+    "complex_lch_white_to_black",
+    angle_to_h = LCH_ANGLE_TO_H,
+    mag_to_L = lambda m: LCH_MAX_L - (LCH_MAX_L-LCH_MIN_L)*m,
+    mag_to_C = LCH_MAGNITUDE_TO_C_DIVERGING_SMOOTH
+)
 
 
 

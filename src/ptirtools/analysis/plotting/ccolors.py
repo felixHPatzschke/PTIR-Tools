@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import matplotlib as mpl
+from colorspacious import cspace_convert
 
 
 
@@ -184,10 +185,6 @@ class ComplexColorTransform(ABC):
         pass
     
     @abstractmethod
-    def to_hsv(self, magnitudes, angles):
-        pass
-    
-    @abstractmethod
     def to_rgba(self, magnitudes, angles):
         pass
 
@@ -235,3 +232,83 @@ class ComplexColorTransformHSV(ComplexColorTransform):
                 return self.to_rgb(magnitudes, angles)
 
 
+class ComplexColorTransformLCh(ComplexColorTransform):
+    """
+    Perceptually improved complex → color transform using LCh (CIELAB).
+    """
+
+    def __init__(
+        self,
+        name: str,
+        angle_to_h: callable = None,
+        mag_to_L: callable = None,
+        mag_to_C: callable = None,
+        mag_to_a: callable = None,
+    ):
+        self.name = name
+
+        # hue in [0, 2π] → degrees [0, 360]
+        self.angle_to_h = angle_to_h if angle_to_h is not None else ( 
+            lambda a: 360.0*a 
+        )
+
+        # perceptual lightness (safe range!)
+        self.mag_to_L = mag_to_L if mag_to_L is not None else ( 
+            lambda m: 30 + 50 * (m / (1 + m))    # compress dynamic range
+        )  
+
+        # chroma (color intensity)
+        self.mag_to_C = mag_to_C if mag_to_C is not None else ( 
+            lambda m: 40 * np.ones_like(m) 
+        )
+
+        # alpha
+        self.mag_to_a = mag_to_a if mag_to_a is not None else ( 
+            lambda m: np.ones_like(m) 
+        )
+
+    def to_lch(self, magnitudes, angles):
+        h = self.angle_to_h(angles)
+        L = self.mag_to_L(magnitudes)
+        C = self.mag_to_C(magnitudes)
+
+        # print(f"L: {L.shape}")
+        # print(f"C: {C.shape}")
+        # print(f"h: {h.shape}")
+
+        return np.stack((L, C, h), axis=-1)
+
+    def to_rgb(self, magnitudes, angles):
+        lch = self.to_lch(magnitudes, angles)
+
+        # LCh → Lab
+        lab = cspace_convert(lch, "CIELCh", "CIELab")
+
+        # Lab → sRGB
+        rgb = cspace_convert(lab, "CIELab", "sRGB1")
+
+        # clip out-of-gamut values
+        return np.clip(rgb, 0.0, 1.0)
+
+    def to_rgba(self, magnitudes, angles):
+        rgb = self.to_rgb(magnitudes, angles)
+        alpha = np.clip(self.mag_to_a(magnitudes), 0.0, 1.0)[..., None]
+        return np.concatenate((rgb, alpha), axis=-1)
+
+    def to_hsv(self, magnitudes, angles):
+        # optional fallback (not really meaningful here)
+        rgb = self.to_rgb(magnitudes, angles)
+        return mpl.colors.rgb_to_hsv(rgb)
+
+    def __call__(self, magnitudes, angles, format: str = 'rgb'):
+        match format.lower():
+            case 'rgb':
+                return self.to_rgb(magnitudes, angles)
+            case 'rgba':
+                return self.to_rgba(magnitudes, angles)
+            case 'hsv':
+                return self.to_hsv(magnitudes, angles)
+            case _:
+                print(f"Format '{format}' not recognized. Defaulting to RGB")
+                return self.to_rgb(magnitudes, angles)
+    
