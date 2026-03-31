@@ -32,36 +32,36 @@ hsv_wb = ComplexColorTransformHSV(
 )
 
 ### Perceptually uniform color maps
-LCH_MAX_C = 70
-LCH_MAX_L = 95
-LCH_MIN_L = 10
+LCH_MAX_CHROMA = 75
+LCH_MAX_LUMINANCE = 95
+LCH_MIN_LUMINANCE = 5
 LCH_ANGLE_TO_H = lambda a : a*360.0
-LCH_MAGNITUDE_TO_C_DIVERGING_SMOOTH = lambda m: LCH_MAX_C * np.sin(np.pi * m)
-LCH_MAGNITUDE_TO_C_DIVERGING_SHARP = lambda m: LCH_MAX_C * np.clip(1 - 2*np.abs(m - 0.5), 0, 1)
+LCH_MAGNITUDE_TO_C_DIVERGING_SMOOTH = lambda m: LCH_MAX_CHROMA * np.sin(np.pi * m)
+LCH_MAGNITUDE_TO_C_DIVERGING_SHARP = lambda m: LCH_MAX_CHROMA * np.clip(1 - 2*np.abs(m - 0.5), 0, 1)
 
 lch_light = ComplexColorTransformLCh(
     "complex_lch_light",
     angle_to_h = LCH_ANGLE_TO_H,
-    mag_to_L   = lambda m: LCH_MAX_L - 50*m,
-    mag_to_C   = lambda m: LCH_MAX_C*m
+    mag_to_L   = lambda m: LCH_MAX_LUMINANCE - 50*m,
+    mag_to_C   = lambda m: LCH_MAX_CHROMA*m
 )
 lch_dark = ComplexColorTransformLCh(
     "complex_lch_dark",
     angle_to_h = LCH_ANGLE_TO_H,
-    mag_to_L   = lambda m: LCH_MIN_L + 50*m,
-    mag_to_C   = lambda m: LCH_MAX_C*m
+    mag_to_L   = lambda m: LCH_MIN_LUMINANCE + 50*m,
+    mag_to_C   = lambda m: LCH_MAX_CHROMA*m
 )
 
 lch_bw = ComplexColorTransformLCh(
     "complex_lch_black_to_white",
     angle_to_h = LCH_ANGLE_TO_H,
-    mag_to_L = lambda m: LCH_MIN_L + (LCH_MAX_L-LCH_MIN_L)*m,
+    mag_to_L = lambda m: LCH_MIN_LUMINANCE + (LCH_MAX_LUMINANCE-LCH_MIN_LUMINANCE)*m,
     mag_to_C = LCH_MAGNITUDE_TO_C_DIVERGING_SMOOTH
 )
 lch_wb = ComplexColorTransformLCh(
     "complex_lch_white_to_black",
     angle_to_h = LCH_ANGLE_TO_H,
-    mag_to_L = lambda m: LCH_MAX_L - (LCH_MAX_L-LCH_MIN_L)*m,
+    mag_to_L = lambda m: LCH_MAX_LUMINANCE - (LCH_MAX_LUMINANCE-LCH_MIN_LUMINANCE)*m,
     mag_to_C = LCH_MAGNITUDE_TO_C_DIVERGING_SMOOTH
 )
 
