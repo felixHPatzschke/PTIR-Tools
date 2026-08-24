@@ -245,6 +245,33 @@ class OPTIRSpectrum(GenericOPTIRMeasurement):
         return res
     
 
+class OPTIRHyperspectra(GenericOPTIRMeasurement):
+    EXPECTED_TYPE_STR = "OPTIRHyperspectra"
+    ATTRIBUTE_MAP:dict = dict( 
+        label = ('Label', lambda v : v.decode('UTF-8') ),
+        timestamp = ('Timestamp', lambda v : v[0] ),
+        humidity_percent = ('Humidity', lambda v : v[0] ),
+        temperature_celsius = ('Temperature', lambda v : v[0] ),
+    )
+
+    def __init__(self, uuid:str, TYPE:str, group:h5py.Group):
+        super().__init__(uuid, TYPE, group)
+
+        self.spectral_domain = domains.spectrum_measurement_domain(self.data.shape, self.attrs)
+        self.lateral_domain = domains.lateral_domain_for_hyperspectral_measurement(self.data.shape, self.attrs)
+
+        ### TODO: ParticleData
+    
+    def debug_info(self) -> str:
+        res = ""
+        res += f"{self.TYPE} '{self.uuid}'\n"
+        res += f"{self.configuration}\n"
+        res += f"{self.lateral_position}\n"
+        res += f"{self.vertical_position}\n"
+        res += f"{self.optir_channel}"
+        return res
+
+
 ### dictionary maps values of 'TYPE' attribute to the specific class the measurement should be stored into
 TYPE_CLASSES = {
     "CameraImage" : CameraImage,
@@ -252,7 +279,8 @@ TYPE_CLASSES = {
     "FLPTIRImage" : FLPTIRImage,
     "FLPTIRImageStack" : FLPTIRImageStack,
     "OPTIRImage" : OPTIRImage,
-    "OPTIRSpectrum" : OPTIRSpectrum
+    "OPTIRSpectrum" : OPTIRSpectrum,
+    "OPTIRHyperspectra" : OPTIRHyperspectra
 }
 
 

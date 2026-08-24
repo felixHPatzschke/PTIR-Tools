@@ -20,7 +20,7 @@ class ComplexNormalize:
         amax=None,
         aoffset=None,
         clip=False,
-        force_wrap: bool = False,
+        force_wrap: bool = True,
     ):
         self.vmin = float(vmin) if vmin is not None else None
         self.vmax = float(vmax) if vmax is not None else None

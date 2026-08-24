@@ -9,10 +9,13 @@ from ptirtools.misc.debugging import debug
 ### Convert an h5py.Group to a nested dictionary, resolving references
 ### This can be used to access all the data from an HDF5-encoded file, such as a *.ptir file,
 ### but no structure is assumed.
-def h5Group2Dict( group, root, key_seq, *, depth=0 ):
+def h5Group2Dict( group, root, key_seq=None, *, depth=0 ):
     """
     Convert an h5py.Group to a nested dictionary, resolving references.
     """
+    if key_seq is None:
+        key_seq = list()
+
     res = {}
 
     for key,val in group.items():

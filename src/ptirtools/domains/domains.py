@@ -190,7 +190,34 @@ class RasterizedLateralDomain(HashableDomain):
         self.width_microns = attrs['ImageWidth'][0]
         self.height_microns = attrs['ImageHeight'][0]
 
-    def extent(self) -> tuple[float,float,float,float]:
+    def from_hyperspectral_measurement(self, datashape:tuple[int,...], attrs:dict):
+        ### dimensions in pixels
+        self.width_px = datashape[2]
+        self.height_px = datashape[1]
+
+        ### lateral position in micrometers
+        self.x_microns = attrs['PositionX'][0]
+        self.y_microns = attrs['PositionY'][0]
+
+        ### lateral extent in micrometers
+        self.width_microns = attrs['ImageWidth'][0]
+        self.height_microns = attrs['ImageHeight'][0]
+
+    def __parse_origin(self, origin=None) -> tuple[float, float]:
+        if origin is None:
+            return ( -self.x_microns, -self.y_microns )
+        elif isinstance(origin, str):
+            if origin.lower() in { "center", "centre" }:
+                return ( 0.0, 0.0 )
+            else:
+                return ( -0.5*self.width_microns, -0.5*self.height_microns )
+            ### todo: interpret & handle string input
+        elif isinstance(origin, Iterable):
+            return ( origin[0], origin[1] )
+        else:
+            return ( 0.0, 0.0 )
+
+    def extent(self, origin=None) -> tuple[float,float,float,float]:
         """
         Compute the extent tuple for `pyplot.imshow()`.
         
@@ -198,17 +225,33 @@ class RasterizedLateralDomain(HashableDomain):
         :return: A tuple of floats to pass into the `extent` argument of `pyplot.imshow()`.
         :rtype: tuple[float, float, float, float]
         """
+        origin = self.__parse_origin(origin)
+
         return (
-            self.x_microns - 0.5*self.width_microns,
-            self.x_microns + 0.5*self.width_microns,
-            self.y_microns - 0.5*self.height_microns,
-            self.y_microns + 0.5*self.height_microns,
+            -origin[0] - 0.5*self.width_microns,
+            -origin[0] + 0.5*self.width_microns,
+            -origin[1] - 0.5*self.height_microns,
+            -origin[1] + 0.5*self.height_microns,
+        )
+
+    def to_arrays(self, origin=None) -> tuple[np.ndarray, np.ndarray]:
+        origin = self.__parse_origin(origin)
+
+        return ( 
+            np.linspace( -origin[1] + 0.5*self.height_microns, -origin[1] - 0.5*self.height_microns, self.height_px ), 
+            np.linspace( -origin[0] - 0.5*self.width_microns, -origin[0] + 0.5*self.width_microns, self.width_px ), 
         )
 
 
 def lateral_domain_for_image_measurement(datashape:tuple[int,...], attrs:dict) -> RasterizedLateralDomain:
     result = RasterizedLateralDomain()
     result.from_image_measurement(datashape, attrs)
+    return result
+
+
+def lateral_domain_for_hyperspectral_measurement(datashape:tuple[int,...], attrs:dict) -> RasterizedLateralDomain:
+    result = RasterizedLateralDomain()
+    result.from_hyperspectral_measurement(datashape, attrs)
     return result
 
 
